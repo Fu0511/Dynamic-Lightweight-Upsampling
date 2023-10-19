@@ -53,14 +53,14 @@ class LoadImageFromNDArray(LoadImageFromFile):
             dict: The dict contains loaded image and meta information.
         """
 
-        img = results['img']
+        img = results["img"]
         if self.to_float32:
             img = img.astype(np.float32)
 
-        results['img_path'] = None
-        results['img'] = img
-        results['img_shape'] = img.shape[:2]
-        results['ori_shape'] = img.shape[:2]
+        results["img_path"] = None
+        results["img"] = img
+        results["img_shape"] = img.shape[:2]
+        results["ori_shape"] = img.shape[:2]
         return results
 
 
@@ -97,8 +97,8 @@ class LoadMultiChannelImageFromFiles(BaseTransform):
     def __init__(
         self,
         to_float32: bool = False,
-        color_type: str = 'unchanged',
-        imdecode_backend: str = 'cv2',
+        color_type: str = "unchanged",
+        imdecode_backend: str = "cv2",
         file_client_args: dict = None,
         backend_args: dict = None,
     ) -> None:
@@ -108,9 +108,9 @@ class LoadMultiChannelImageFromFiles(BaseTransform):
         self.backend_args = backend_args
         if file_client_args is not None:
             raise RuntimeError(
-                'The `file_client_args` is deprecated, '
-                'please use `backend_args` instead, please refer to'
-                'https://github.com/open-mmlab/mmdetection/blob/main/configs/_base_/datasets/coco_detection.py'  # noqa: E501
+                "The `file_client_args` is deprecated, "
+                "please use `backend_args` instead, please refer to"
+                "https://github.com/open-mmlab/mmdetection/blob/main/configs/_base_/datasets/coco_detection.py"  # noqa: E501
             )
 
     def transform(self, results: dict) -> dict:
@@ -124,30 +124,32 @@ class LoadMultiChannelImageFromFiles(BaseTransform):
             dict: The dict contains loaded images and meta information.
         """
 
-        assert isinstance(results['img_path'], list)
+        assert isinstance(results["img_path"], list)
         img = []
-        for name in results['img_path']:
+        for name in results["img_path"]:
             img_bytes = get(name, backend_args=self.backend_args)
             img.append(
                 mmcv.imfrombytes(
-                    img_bytes,
-                    flag=self.color_type,
-                    backend=self.imdecode_backend))
+                    img_bytes, flag=self.color_type, backend=self.imdecode_backend
+                )
+            )
         img = np.stack(img, axis=-1)
         if self.to_float32:
             img = img.astype(np.float32)
 
-        results['img'] = img
-        results['img_shape'] = img.shape[:2]
-        results['ori_shape'] = img.shape[:2]
+        results["img"] = img
+        results["img_shape"] = img.shape[:2]
+        results["ori_shape"] = img.shape[:2]
         return results
 
     def __repr__(self):
-        repr_str = (f'{self.__class__.__name__}('
-                    f'to_float32={self.to_float32}, '
-                    f"color_type='{self.color_type}', "
-                    f"imdecode_backend='{self.imdecode_backend}', "
-                    f'backend_args={self.backend_args})')
+        repr_str = (
+            f"{self.__class__.__name__}("
+            f"to_float32={self.to_float32}, "
+            f"color_type='{self.color_type}', "
+            f"imdecode_backend='{self.imdecode_backend}', "
+            f"backend_args={self.backend_args})"
+        )
         return repr_str
 
 
@@ -253,14 +255,15 @@ class LoadAnnotations(MMCV_LoadAnnotations):
     """
 
     def __init__(
-            self,
-            with_mask: bool = False,
-            poly2mask: bool = True,
-            box_type: str = 'hbox',
-            # use for semseg
-            reduce_zero_label: bool = False,
-            ignore_index: int = 255,
-            **kwargs) -> None:
+        self,
+        with_mask: bool = False,
+        poly2mask: bool = True,
+        box_type: str = "hbox",
+        # use for semseg
+        reduce_zero_label: bool = False,
+        ignore_index: int = 255,
+        **kwargs,
+    ) -> None:
         super(LoadAnnotations, self).__init__(**kwargs)
         self.with_mask = with_mask
         self.poly2mask = poly2mask
@@ -278,16 +281,17 @@ class LoadAnnotations(MMCV_LoadAnnotations):
         """
         gt_bboxes = []
         gt_ignore_flags = []
-        for instance in results.get('instances', []):
-            gt_bboxes.append(instance['bbox'])
-            gt_ignore_flags.append(instance['ignore_flag'])
+        for instance in results.get("instances", []):
+            gt_bboxes.append(instance["bbox"])
+            gt_ignore_flags.append(instance["ignore_flag"])
         if self.box_type is None:
-            results['gt_bboxes'] = np.array(
-                gt_bboxes, dtype=np.float32).reshape((-1, 4))
+            results["gt_bboxes"] = np.array(gt_bboxes, dtype=np.float32).reshape(
+                (-1, 4)
+            )
         else:
             _, box_type_cls = get_box_type(self.box_type)
-            results['gt_bboxes'] = box_type_cls(gt_bboxes, dtype=torch.float32)
-        results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=bool)
+            results["gt_bboxes"] = box_type_cls(gt_bboxes, dtype=torch.float32)
+        results["gt_ignore_flags"] = np.array(gt_ignore_flags, dtype=bool)
 
     def _load_labels(self, results: dict) -> None:
         """Private function to load label annotations.
@@ -299,14 +303,14 @@ class LoadAnnotations(MMCV_LoadAnnotations):
             dict: The dict contains loaded label annotations.
         """
         gt_bboxes_labels = []
-        for instance in results.get('instances', []):
-            gt_bboxes_labels.append(instance['bbox_label'])
+        for instance in results.get("instances", []):
+            gt_bboxes_labels.append(instance["bbox_label"])
         # TODO: Inconsistent with mmcv, consider how to deal with it later.
-        results['gt_bboxes_labels'] = np.array(
-            gt_bboxes_labels, dtype=np.int64)
+        results["gt_bboxes_labels"] = np.array(gt_bboxes_labels, dtype=np.int64)
 
-    def _poly2mask(self, mask_ann: Union[list, dict], img_h: int,
-                   img_w: int) -> np.ndarray:
+    def _poly2mask(
+        self, mask_ann: Union[list, dict], img_h: int, img_w: int
+    ) -> np.ndarray:
         """Private function to convert masks represented with polygon to
         bitmaps.
 
@@ -324,7 +328,7 @@ class LoadAnnotations(MMCV_LoadAnnotations):
             # we merge all parts into one mask rle code
             rles = maskUtils.frPyObjects(mask_ann, img_h, img_w)
             rle = maskUtils.merge(rles)
-        elif isinstance(mask_ann['counts'], list):
+        elif isinstance(mask_ann["counts"], list):
             # uncompressed RLE
             rle = maskUtils.frPyObjects(mask_ann, img_h, img_w)
         else:
@@ -344,36 +348,38 @@ class LoadAnnotations(MMCV_LoadAnnotations):
         """
         gt_masks = []
         gt_ignore_flags = []
-        for instance in results.get('instances', []):
-            gt_mask = instance['mask']
+        for instance in results.get("instances", []):
+            gt_mask = instance["mask"]
             # If the annotation of segmentation mask is invalid,
             # ignore the whole instance.
             if isinstance(gt_mask, list):
                 gt_mask = [
-                    np.array(polygon) for polygon in gt_mask
+                    np.array(polygon)
+                    for polygon in gt_mask
                     if len(polygon) % 2 == 0 and len(polygon) >= 6
                 ]
                 if len(gt_mask) == 0:
                     # ignore this instance and set gt_mask to a fake mask
-                    instance['ignore_flag'] = 1
+                    instance["ignore_flag"] = 1
                     gt_mask = [np.zeros(6)]
             elif not self.poly2mask:
                 # `PolygonMasks` requires a ploygon of format List[np.array],
                 # other formats are invalid.
-                instance['ignore_flag'] = 1
+                instance["ignore_flag"] = 1
                 gt_mask = [np.zeros(6)]
-            elif isinstance(gt_mask, dict) and \
-                    not (gt_mask.get('counts') is not None and
-                         gt_mask.get('size') is not None and
-                         isinstance(gt_mask['counts'], (list, str))):
+            elif isinstance(gt_mask, dict) and not (
+                gt_mask.get("counts") is not None
+                and gt_mask.get("size") is not None
+                and isinstance(gt_mask["counts"], (list, str))
+            ):
                 # if gt_mask is a dict, it should include `counts` and `size`,
                 # so that `BitmapMasks` can uncompressed RLE
-                instance['ignore_flag'] = 1
+                instance["ignore_flag"] = 1
                 gt_mask = [np.zeros(6)]
             gt_masks.append(gt_mask)
             # re-process gt_ignore_flags
-            gt_ignore_flags.append(instance['ignore_flag'])
-        results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=bool)
+            gt_ignore_flags.append(instance["ignore_flag"])
+        results["gt_ignore_flags"] = np.array(gt_ignore_flags, dtype=bool)
         return gt_masks
 
     def _load_masks(self, results: dict) -> None:
@@ -382,15 +388,16 @@ class LoadAnnotations(MMCV_LoadAnnotations):
         Args:
             results (dict): Result dict from :obj:``mmengine.BaseDataset``.
         """
-        h, w = results['ori_shape']
+        h, w = results["ori_shape"]
         gt_masks = self._process_masks(results)
         if self.poly2mask:
             gt_masks = BitmapMasks(
-                [self._poly2mask(mask, h, w) for mask in gt_masks], h, w)
+                [self._poly2mask(mask, h, w) for mask in gt_masks], h, w
+            )
         else:
             # fake polygon masks will be ignored in `PackDetInputs`
             gt_masks = PolygonMasks([mask for mask in gt_masks], h, w)
-        results['gt_masks'] = gt_masks
+        results["gt_masks"] = gt_masks
 
     def _load_seg_map(self, results: dict) -> None:
         """Private function to load semantic segmentation annotations.
@@ -401,32 +408,32 @@ class LoadAnnotations(MMCV_LoadAnnotations):
         Returns:
             dict: The dict contains loaded semantic segmentation annotations.
         """
-        if results.get('seg_map_path', None) is None:
+        if results.get("seg_map_path", None) is None:
             return
 
-        img_bytes = get(
-            results['seg_map_path'], backend_args=self.backend_args)
+        img_bytes = get(results["seg_map_path"], backend_args=self.backend_args)
         gt_semantic_seg = mmcv.imfrombytes(
-            img_bytes, flag='unchanged',
-            backend=self.imdecode_backend).squeeze()
+            img_bytes, flag="unchanged", backend=self.imdecode_backend
+        ).squeeze()
 
         if self.reduce_zero_label:
             # avoid using underflow conversion
             gt_semantic_seg[gt_semantic_seg == 0] = self.ignore_index
             gt_semantic_seg = gt_semantic_seg - 1
-            gt_semantic_seg[gt_semantic_seg == self.ignore_index -
-                            1] = self.ignore_index
+            gt_semantic_seg[
+                gt_semantic_seg == self.ignore_index - 1
+            ] = self.ignore_index
 
         # modify if custom classes
-        if results.get('label_map', None) is not None:
+        if results.get("label_map", None) is not None:
             # Add deep copy to solve bug of repeatedly
             # replace `gt_semantic_seg`, which is reported in
             # https://github.com/open-mmlab/mmsegmentation/pull/1445/
             gt_semantic_seg_copy = gt_semantic_seg.copy()
-            for old_id, new_id in results['label_map'].items():
+            for old_id, new_id in results["label_map"].items():
                 gt_semantic_seg[gt_semantic_seg_copy == old_id] = new_id
-        results['gt_seg_map'] = gt_semantic_seg
-        results['ignore_index'] = self.ignore_index
+        results["gt_seg_map"] = gt_semantic_seg
+        results["ignore_index"] = self.ignore_index
 
     def transform(self, results: dict) -> dict:
         """Function to load multiple types annotations.
@@ -451,14 +458,56 @@ class LoadAnnotations(MMCV_LoadAnnotations):
 
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
-        repr_str += f'(with_bbox={self.with_bbox}, '
-        repr_str += f'with_label={self.with_label}, '
-        repr_str += f'with_mask={self.with_mask}, '
-        repr_str += f'with_seg={self.with_seg}, '
-        repr_str += f'poly2mask={self.poly2mask}, '
+        repr_str += f"(with_bbox={self.with_bbox}, "
+        repr_str += f"with_label={self.with_label}, "
+        repr_str += f"with_mask={self.with_mask}, "
+        repr_str += f"with_seg={self.with_seg}, "
+        repr_str += f"poly2mask={self.poly2mask}, "
         repr_str += f"imdecode_backend='{self.imdecode_backend}', "
-        repr_str += f'backend_args={self.backend_args})'
+        repr_str += f"backend_args={self.backend_args})"
         return repr_str
+
+
+# TODO Add docstring
+@TRANSFORMS.register_module()
+class LoadReIDDetAnnotations(LoadAnnotations):
+    def __init__(
+        self,
+        with_mask: bool = True,
+        poly2mask: bool = False,
+        box_type: str = "hbox",
+        reduce_zero_label: bool = False,
+        ignore_index: int = 255,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            with_mask,
+            poly2mask,
+            box_type,
+            reduce_zero_label,
+            ignore_index,
+            **kwargs,
+        )
+        self.with_mask = False
+        self.with_seg = False
+
+    def _load_labels(self, results: dict) -> None:
+        """Private function to load label annotations (detections and mmdet).
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+
+        Returns:
+            dict: The dict contains loaded label annotations.
+        """
+        gt_bboxes_labels = []
+        gt_bboxes_person_ids = []
+        for instance in results.get("instances", []):
+            gt_bboxes_labels.append(instance["bbox_label"])
+            gt_bboxes_person_ids.append(instance["person_id"])
+        # TODO: Inconsistent with mmcv, consider how to deal with it later.
+        results["gt_bboxes_labels"] = np.array(gt_bboxes_labels, dtype=np.int64)
+        results["gt_bboxes_person_ids"] = np.array(gt_bboxes_person_ids, dtype=np.int64)
 
 
 @TRANSFORMS.register_module()
@@ -558,21 +607,24 @@ class LoadPanopticAnnotations(LoadAnnotations):
             corresponding backend in mmdet >= 3.0.0rc7. Defaults to None.
     """
 
-    def __init__(self,
-                 with_bbox: bool = True,
-                 with_label: bool = True,
-                 with_mask: bool = True,
-                 with_seg: bool = True,
-                 box_type: str = 'hbox',
-                 imdecode_backend: str = 'cv2',
-                 backend_args: dict = None) -> None:
+    def __init__(
+        self,
+        with_bbox: bool = True,
+        with_label: bool = True,
+        with_mask: bool = True,
+        with_seg: bool = True,
+        box_type: str = "hbox",
+        imdecode_backend: str = "cv2",
+        backend_args: dict = None,
+    ) -> None:
         try:
             from panopticapi import utils
         except ImportError:
             raise ImportError(
-                'panopticapi is not installed, please install it by: '
-                'pip install git+https://github.com/cocodataset/'
-                'panopticapi.git.')
+                "panopticapi is not installed, please install it by: "
+                "pip install git+https://github.com/cocodataset/"
+                "panopticapi.git."
+            )
         self.rgb2id = utils.rgb2id
 
         super(LoadPanopticAnnotations, self).__init__(
@@ -583,7 +635,8 @@ class LoadPanopticAnnotations(LoadAnnotations):
             with_keypoints=False,
             box_type=box_type,
             imdecode_backend=imdecode_backend,
-            backend_args=backend_args)
+            backend_args=backend_args,
+        )
 
     def _load_masks_and_semantic_segs(self, results: dict) -> None:
         """Private function to load mask and semantic segmentation annotations.
@@ -596,33 +649,33 @@ class LoadPanopticAnnotations(LoadAnnotations):
             results (dict): Result dict from :obj:``mmdet.CustomDataset``.
         """
         # seg_map_path is None, when inference on the dataset without gts.
-        if results.get('seg_map_path', None) is None:
+        if results.get("seg_map_path", None) is None:
             return
 
-        img_bytes = get(
-            results['seg_map_path'], backend_args=self.backend_args)
+        img_bytes = get(results["seg_map_path"], backend_args=self.backend_args)
         pan_png = mmcv.imfrombytes(
-            img_bytes, flag='color', channel_order='rgb').squeeze()
+            img_bytes, flag="color", channel_order="rgb"
+        ).squeeze()
         pan_png = self.rgb2id(pan_png)
 
         gt_masks = []
         gt_seg = np.zeros_like(pan_png) + 255  # 255 as ignore
 
-        for segment_info in results['segments_info']:
-            mask = (pan_png == segment_info['id'])
-            gt_seg = np.where(mask, segment_info['category'], gt_seg)
+        for segment_info in results["segments_info"]:
+            mask = pan_png == segment_info["id"]
+            gt_seg = np.where(mask, segment_info["category"], gt_seg)
 
             # The legal thing masks
-            if segment_info.get('is_thing'):
+            if segment_info.get("is_thing"):
                 gt_masks.append(mask.astype(np.uint8))
 
         if self.with_mask:
-            h, w = results['ori_shape']
+            h, w = results["ori_shape"]
             gt_masks = BitmapMasks(gt_masks, h, w)
-            results['gt_masks'] = gt_masks
+            results["gt_masks"] = gt_masks
 
         if self.with_seg:
-            results['gt_seg_map'] = gt_seg
+            results["gt_seg_map"] = gt_seg
 
     def transform(self, results: dict) -> dict:
         """Function to load multiple types panoptic annotations.
@@ -677,36 +730,35 @@ class LoadProposals(BaseTransform):
             dict: The dict contains loaded proposal annotations.
         """
 
-        proposals = results['proposals']
+        proposals = results["proposals"]
         # the type of proposals should be `dict` or `InstanceData`
-        assert isinstance(proposals, dict) \
-               or isinstance(proposals, BaseDataElement)
-        bboxes = proposals['bboxes'].astype(np.float32)
-        assert bboxes.shape[1] == 4, \
-            f'Proposals should have shapes (n, 4), but found {bboxes.shape}'
+        assert isinstance(proposals, dict) or isinstance(proposals, BaseDataElement)
+        bboxes = proposals["bboxes"].astype(np.float32)
+        assert (
+            bboxes.shape[1] == 4
+        ), f"Proposals should have shapes (n, 4), but found {bboxes.shape}"
 
-        if 'scores' in proposals:
-            scores = proposals['scores'].astype(np.float32)
+        if "scores" in proposals:
+            scores = proposals["scores"].astype(np.float32)
             assert bboxes.shape[0] == scores.shape[0]
         else:
             scores = np.zeros(bboxes.shape[0], dtype=np.float32)
 
         if self.num_max_proposals is not None:
             # proposals should sort by scores during dumping the proposals
-            bboxes = bboxes[:self.num_max_proposals]
-            scores = scores[:self.num_max_proposals]
+            bboxes = bboxes[: self.num_max_proposals]
+            scores = scores[: self.num_max_proposals]
 
         if len(bboxes) == 0:
             bboxes = np.zeros((0, 4), dtype=np.float32)
             scores = np.zeros(0, dtype=np.float32)
 
-        results['proposals'] = bboxes
-        results['proposals_scores'] = scores
+        results["proposals"] = bboxes
+        results["proposals_scores"] = scores
         return results
 
     def __repr__(self):
-        return self.__class__.__name__ + \
-               f'(num_max_proposals={self.num_max_proposals})'
+        return self.__class__.__name__ + f"(num_max_proposals={self.num_max_proposals})"
 
 
 @TRANSFORMS.register_module()
@@ -740,12 +792,14 @@ class FilterAnnotations(BaseTransform):
             becomes an empty bbox after filtering. Defaults to True.
     """
 
-    def __init__(self,
-                 min_gt_bbox_wh: Tuple[int, int] = (1, 1),
-                 min_gt_mask_area: int = 1,
-                 by_box: bool = True,
-                 by_mask: bool = False,
-                 keep_empty: bool = True) -> None:
+    def __init__(
+        self,
+        min_gt_bbox_wh: Tuple[int, int] = (1, 1),
+        min_gt_mask_area: int = 1,
+        by_box: bool = True,
+        by_mask: bool = False,
+        keep_empty: bool = True,
+    ) -> None:
         # TODO: add more filter options
         assert by_box or by_mask
         self.min_gt_bbox_wh = min_gt_bbox_wh
@@ -764,19 +818,22 @@ class FilterAnnotations(BaseTransform):
         Returns:
             dict: Updated result dict.
         """
-        assert 'gt_bboxes' in results
-        gt_bboxes = results['gt_bboxes']
+        assert "gt_bboxes" in results
+        gt_bboxes = results["gt_bboxes"]
         if gt_bboxes.shape[0] == 0:
             return results
 
         tests = []
         if self.by_box:
             tests.append(
-                ((gt_bboxes.widths > self.min_gt_bbox_wh[0]) &
-                 (gt_bboxes.heights > self.min_gt_bbox_wh[1])).numpy())
+                (
+                    (gt_bboxes.widths > self.min_gt_bbox_wh[0])
+                    & (gt_bboxes.heights > self.min_gt_bbox_wh[1])
+                ).numpy()
+            )
         if self.by_mask:
-            assert 'gt_masks' in results
-            gt_masks = results['gt_masks']
+            assert "gt_masks" in results
+            gt_masks = results["gt_masks"]
             tests.append(gt_masks.areas >= self.min_gt_mask_area)
 
         keep = tests[0]
@@ -787,7 +844,7 @@ class FilterAnnotations(BaseTransform):
             if self.keep_empty:
                 return None
 
-        keys = ('gt_bboxes', 'gt_bboxes_labels', 'gt_masks', 'gt_ignore_flags')
+        keys = ("gt_bboxes", "gt_bboxes_labels", "gt_masks", "gt_ignore_flags")
         for key in keys:
             if key in results:
                 results[key] = results[key][keep]
@@ -795,9 +852,10 @@ class FilterAnnotations(BaseTransform):
         return results
 
     def __repr__(self):
-        return self.__class__.__name__ + \
-               f'(min_gt_bbox_wh={self.min_gt_bbox_wh}, ' \
-               f'keep_empty={self.keep_empty})'
+        return (
+            self.__class__.__name__ + f"(min_gt_bbox_wh={self.min_gt_bbox_wh}, "
+            f"keep_empty={self.keep_empty})"
+        )
 
 
 @TRANSFORMS.register_module()
@@ -825,12 +883,14 @@ class LoadEmptyAnnotations(BaseTransform):
             of the corresponding config. Defaults to 255.
     """
 
-    def __init__(self,
-                 with_bbox: bool = True,
-                 with_label: bool = True,
-                 with_mask: bool = False,
-                 with_seg: bool = False,
-                 seg_ignore_label: int = 255) -> None:
+    def __init__(
+        self,
+        with_bbox: bool = True,
+        with_label: bool = True,
+        with_mask: bool = False,
+        with_seg: bool = False,
+        seg_ignore_label: int = 255,
+    ) -> None:
         self.with_bbox = with_bbox
         self.with_label = with_label
         self.with_mask = with_mask
@@ -846,28 +906,29 @@ class LoadEmptyAnnotations(BaseTransform):
             dict: Updated result dict.
         """
         if self.with_bbox:
-            results['gt_bboxes'] = np.zeros((0, 4), dtype=np.float32)
-            results['gt_ignore_flags'] = np.zeros((0, ), dtype=bool)
+            results["gt_bboxes"] = np.zeros((0, 4), dtype=np.float32)
+            results["gt_ignore_flags"] = np.zeros((0,), dtype=bool)
         if self.with_label:
-            results['gt_bboxes_labels'] = np.zeros((0, ), dtype=np.int64)
+            results["gt_bboxes_labels"] = np.zeros((0,), dtype=np.int64)
         if self.with_mask:
             # TODO: support PolygonMasks
-            h, w = results['img_shape']
+            h, w = results["img_shape"]
             gt_masks = np.zeros((0, h, w), dtype=np.uint8)
-            results['gt_masks'] = BitmapMasks(gt_masks, h, w)
+            results["gt_masks"] = BitmapMasks(gt_masks, h, w)
         if self.with_seg:
-            h, w = results['img_shape']
-            results['gt_seg_map'] = self.seg_ignore_label * np.ones(
-                (h, w), dtype=np.uint8)
+            h, w = results["img_shape"]
+            results["gt_seg_map"] = self.seg_ignore_label * np.ones(
+                (h, w), dtype=np.uint8
+            )
         return results
 
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
-        repr_str += f'(with_bbox={self.with_bbox}, '
-        repr_str += f'with_label={self.with_label}, '
-        repr_str += f'with_mask={self.with_mask}, '
-        repr_str += f'with_seg={self.with_seg}, '
-        repr_str += f'seg_ignore_label={self.seg_ignore_label})'
+        repr_str += f"(with_bbox={self.with_bbox}, "
+        repr_str += f"with_label={self.with_label}, "
+        repr_str += f"with_mask={self.with_mask}, "
+        repr_str += f"with_seg={self.with_seg}, "
+        repr_str += f"seg_ignore_label={self.seg_ignore_label})"
         return repr_str
 
 
@@ -898,10 +959,10 @@ class InferencerLoader(BaseTransform):
 
     def __init__(self, **kwargs) -> None:
         super().__init__()
-        self.from_file = TRANSFORMS.build(
-            dict(type='LoadImageFromFile', **kwargs))
+        self.from_file = TRANSFORMS.build(dict(type="LoadImageFromFile", **kwargs))
         self.from_ndarray = TRANSFORMS.build(
-            dict(type='mmdet.LoadImageFromNDArray', **kwargs))
+            dict(type="mmdet.LoadImageFromNDArray", **kwargs)
+        )
 
     def transform(self, results: Union[str, np.ndarray, dict]) -> dict:
         """Transform function to add image meta information.
@@ -921,7 +982,7 @@ class InferencerLoader(BaseTransform):
         else:
             raise NotImplementedError
 
-        if 'img' in inputs:
+        if "img" in inputs:
             return self.from_ndarray(inputs)
         return self.from_file(inputs)
 
@@ -1014,13 +1075,13 @@ class LoadTrackAnnotations(LoadAnnotations):
         gt_bboxes = []
         gt_ignore_flags = []
         # TODO: use bbox_type
-        for instance in results['instances']:
+        for instance in results["instances"]:
             # The datasets which are only format in evaluation don't have
             # groundtruth boxes.
-            if 'bbox' in instance:
-                gt_bboxes.append(instance['bbox'])
-            if 'ignore_flag' in instance:
-                gt_ignore_flags.append(instance['ignore_flag'])
+            if "bbox" in instance:
+                gt_bboxes.append(instance["bbox"])
+            if "ignore_flag" in instance:
+                gt_ignore_flags.append(instance["ignore_flag"])
 
         # TODO: check this case
         if len(gt_bboxes) != len(gt_ignore_flags):
@@ -1029,9 +1090,8 @@ class LoadTrackAnnotations(LoadAnnotations):
             # ``gt_ignore_flags`` the same
             gt_ignore_flags = [False] * len(gt_bboxes)
 
-        results['gt_bboxes'] = np.array(
-            gt_bboxes, dtype=np.float32).reshape(-1, 4)
-        results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=bool)
+        results["gt_bboxes"] = np.array(gt_bboxes, dtype=np.float32).reshape(-1, 4)
+        results["gt_ignore_flags"] = np.array(gt_ignore_flags, dtype=bool)
 
     def _load_instances_ids(self, results: dict) -> None:
         """Private function to load instances id annotations.
@@ -1043,10 +1103,9 @@ class LoadTrackAnnotations(LoadAnnotations):
             dict: The dict containing instances id annotations.
         """
         gt_instances_ids = []
-        for instance in results['instances']:
-            gt_instances_ids.append(instance['instance_id'])
-        results['gt_instances_ids'] = np.array(
-            gt_instances_ids, dtype=np.int32)
+        for instance in results["instances"]:
+            gt_instances_ids.append(instance["instance_id"])
+        results["gt_instances_ids"] = np.array(gt_instances_ids, dtype=np.int32)
 
     def transform(self, results: dict) -> dict:
         """Function to load multiple types annotations.
@@ -1064,11 +1123,11 @@ class LoadTrackAnnotations(LoadAnnotations):
 
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
-        repr_str += f'(with_bbox={self.with_bbox}, '
-        repr_str += f'with_label={self.with_label}, '
-        repr_str += f'with_mask={self.with_mask}, '
-        repr_str += f'with_seg={self.with_seg}, '
-        repr_str += f'poly2mask={self.poly2mask}, '
+        repr_str += f"(with_bbox={self.with_bbox}, "
+        repr_str += f"with_label={self.with_label}, "
+        repr_str += f"with_mask={self.with_mask}, "
+        repr_str += f"with_seg={self.with_seg}, "
+        repr_str += f"poly2mask={self.poly2mask}, "
         repr_str += f"imdecode_backend='{self.imdecode_backend}', "
-        repr_str += f'file_client_args={self.file_client_args})'
+        repr_str += f"file_client_args={self.file_client_args})"
         return repr_str
