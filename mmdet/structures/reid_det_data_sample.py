@@ -1,4 +1,4 @@
-from typing import Protocol, runtime_checkable
+from typing import List, Optional, Protocol, runtime_checkable
 from torch import LongTensor
 from mmengine.structures import BaseDataElement, InstanceData
 
@@ -67,3 +67,7 @@ class ReIDDetDataSample(BaseDataElement):
     @ignored_instances.deleter
     def ignored_instances(self):
         del self._ignored_instances
+
+
+SampleList = List[ReIDDetDataSample]
+OptSampleList = Optional[SampleList]
