@@ -639,7 +639,8 @@ class PackReIDDetInputs(BaseTransform):
                 continue
 
             # No ignore flags -> just fill instance_data.
-            if "gt_ignore_flags" not in results:
+            gt_ignore_flags = results.get("gt_ignore_flags", [])
+            if gt_ignore_flags == []:
                 instance_data[instance_key] = self._get_instance(results[result_key])
                 continue
 

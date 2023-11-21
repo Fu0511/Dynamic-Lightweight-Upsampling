@@ -171,25 +171,24 @@ class TestLoadReIDDetAnnotations(unittest.TestCase):
         tearDown() -> cleanUp()
         """
         data_prefix = osp.join(osp.dirname(__file__), "../../data")
-        seg_map = osp.join(data_prefix, "gray.jpg")
         self.results = {
             "ori_shape": (300, 400),
-            "instances": [
+            "detection_annotations": [
                 {
                     "bbox": [0, 0, 10, 20],
-                    "bbox_label": 1,
+                    "label": 0,
                     "person_id": 1,
                     "ignore_flag": 0,
                 },
                 {
                     "bbox": [10, 10, 110, 120],
-                    "bbox_label": 2,
+                    "label": 0,
                     "person_id": 2,
                     "ignore_flag": 0,
                 },
                 {
                     "bbox": [50, 50, 60, 80],
-                    "bbox_label": 2,
+                    "label": 0,
                     "person_id": 3,
                     "ignore_flag": 1,
                 },
@@ -225,7 +224,7 @@ class TestLoadReIDDetAnnotations(unittest.TestCase):
         )
         results = transform(copy.deepcopy(self.results))
         self.assertIn("gt_bboxes_labels", results)
-        self.assertTrue((results["gt_bboxes_labels"] == np.array([1, 2, 2])).all())
+        self.assertTrue((results["gt_bboxes_labels"] == np.array([0, 0, 0])).all())
         self.assertEqual(results["gt_bboxes_labels"].dtype, np.int64)
         self.assertTrue((results["gt_bboxes_person_ids"] == np.array([1, 2, 3])).all())
         self.assertEqual(results["gt_bboxes_person_ids"].dtype, np.int64)

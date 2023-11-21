@@ -268,9 +268,7 @@ class TestPackReIDDetInputs(unittest.TestCase):
             "scale_factor": 2.0,
             "flip": False,
             "img": rng.rand(300, 400),
-            "gt_bboxes_labels": rng.rand(
-                3,
-            ),
+            "gt_bboxes_labels": np.zeros(3),
             "gt_ignore_flags": np.array([0, 0, 1], dtype=bool),
         }
         self.results2 = {
@@ -281,9 +279,7 @@ class TestPackReIDDetInputs(unittest.TestCase):
             "scale_factor": 2.0,
             "flip": False,
             "img": rng.rand(300, 400),
-            "gt_bboxes_labels": rng.rand(
-                3,
-            ),
+            "gt_bboxes_labels": np.zeros(3),
             "gt_ignore_flags": np.array([0, 0, 0], dtype=bool),
         }
         self.meta_keys = ("img_label", "img_path", "ori_shape", "scale_factor", "flip")

@@ -491,6 +491,30 @@ class LoadReIDDetAnnotations(LoadAnnotations):
         self.with_mask = False
         self.with_seg = False
 
+    def _load_bboxes(self, results: dict) -> None:
+        """Private function to load bounding box annotations.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+        Returns:
+            dict: The dict contains loaded bounding box annotations.
+        """
+        gt_bboxes = []
+        gt_ignore_flags = []
+        for detection_annotation in results.get("detection_annotations", []):
+            gt_bboxes.append(detection_annotation["bbox"])
+            gt_ignore_flags.append(
+                detection_annotation.get("ignore_flag", [])
+            )
+        if self.box_type is None:
+            results["gt_bboxes"] = np.array(gt_bboxes, dtype=np.float32).reshape(
+                (-1, 4)
+            )
+        else:
+            _, box_type_cls = get_box_type(self.box_type)
+            results["gt_bboxes"] = box_type_cls(gt_bboxes, dtype=torch.float32)
+        results["gt_ignore_flags"] = np.array(gt_ignore_flags, dtype=bool)
+
     def _load_labels(self, results: dict) -> None:
         """Private function to load label annotations (detections and mmdet).
 
@@ -502,10 +526,9 @@ class LoadReIDDetAnnotations(LoadAnnotations):
         """
         gt_bboxes_labels = []
         gt_bboxes_person_ids = []
-        for instance in results.get("instances", []):
-            gt_bboxes_labels.append(instance["bbox_label"])
-            gt_bboxes_person_ids.append(instance["person_id"])
-        # TODO: Inconsistent with mmcv, consider how to deal with it later.
+        for detection_annotation in results.get("detection_annotations", []):
+            gt_bboxes_labels.append(detection_annotation["label"])
+            gt_bboxes_person_ids.append(detection_annotation["person_id"])
         results["gt_bboxes_labels"] = np.array(gt_bboxes_labels, dtype=np.int64)
         results["gt_bboxes_person_ids"] = np.array(gt_bboxes_person_ids, dtype=np.int64)
 

@@ -8,7 +8,7 @@ from mmdet.structures.bbox import HorizontalBoxes
 
 
 class ReIDDetInstanceData(Protocol):
-    # Detection labels, the name is confusion but we keep to be compatible
+    # Detection labels, the name is confusing but we keep to be compatible
     # with existing Detector in mmdet.
     labels: LongTensor
     reid_labels: LongTensor
@@ -69,5 +69,5 @@ class ReIDDetDataSample(BaseDataElement):
         del self._ignored_instances
 
 
-SampleList = List[ReIDDetDataSample]
-OptSampleList = Optional[SampleList]
+ReIDDetSampleList = List[ReIDDetDataSample]
+OptReIDDetSampleList = Optional[ReIDDetSampleList]
