@@ -547,7 +547,7 @@ class PackReIDDetInputs(BaseTransform):
     The ``img_meta`` item is always populated.  The contents of the
     ``img_meta`` dictionary depends on ``meta_keys``. By default this includes:
 
-        - ``img_id``: id of the image
+        - ``img_label``: id of the image (compliant with openmmlab 2.0 annotations)
 
         - ``img_path``: path to the image file
 
@@ -571,7 +571,7 @@ class PackReIDDetInputs(BaseTransform):
     """
 
     DEFAULT_META_KEYS = (
-        "img_id",
+        "img_label",
         "img_path",
         "ori_shape",
         "img_shape",

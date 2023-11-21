@@ -261,7 +261,7 @@ class TestPackReIDDetInputs(unittest.TestCase):
         img_path = osp.join(data_prefix, "color.jpg")
         rng = np.random.RandomState(0)
         self.results1 = {
-            "img_id": 1,
+            "img_label": 1,
             "img_path": img_path,
             "ori_shape": (300, 400),
             "img_shape": (600, 800),
@@ -274,7 +274,7 @@ class TestPackReIDDetInputs(unittest.TestCase):
             "gt_ignore_flags": np.array([0, 0, 1], dtype=bool),
         }
         self.results2 = {
-            "img_id": 1,
+            "img_label": 1,
             "img_path": img_path,
             "ori_shape": (300, 400),
             "img_shape": (600, 800),
@@ -286,7 +286,7 @@ class TestPackReIDDetInputs(unittest.TestCase):
             ),
             "gt_ignore_flags": np.array([0, 0, 0], dtype=bool),
         }
-        self.meta_keys = ("img_id", "img_path", "ori_shape", "scale_factor", "flip")
+        self.meta_keys = ("img_label", "img_path", "ori_shape", "scale_factor", "flip")
 
     def test_transform(self):
         transform = PackReIDDetInputs(meta_keys=self.meta_keys)
