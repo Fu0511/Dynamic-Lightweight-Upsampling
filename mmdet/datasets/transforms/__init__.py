@@ -38,5 +38,5 @@ __all__ = [
     'FixShapeResize', 'ProposalBroadcaster', 'InferencerLoader',
     'LoadTrackAnnotations', 'BaseFrameSample', 'UniformRefFrameSample',
     'PackTrackInputs', 'PackReIDInputs', 'FixScaleResize', 'ResizeShortestEdge',
-    'PackReIDDetInputs',
+    'PackReIDDetInputs', 'LoadReIDDetAnnotations'
 ]

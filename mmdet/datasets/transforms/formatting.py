@@ -620,10 +620,8 @@ class PackReIDDetInputs(BaseTransform):
     def _get_meta_info(self, results) -> dict:
         img_meta = {}
         for key in self.meta_keys:
-            assert key in results, (
-                f"`{key}` is not found in `results`, "
-                f"the valid keys are {list(results)}."
-            )
+            assert key in results, (f"`{key}` is not found in `results`, "
+                                    f"the valid keys are {list(results)}.")
             img_meta[key] = results[key]
 
         return img_meta
@@ -639,20 +637,18 @@ class PackReIDDetInputs(BaseTransform):
                 continue
 
             # No ignore flags -> just fill instance_data.
-            gt_ignore_flags = results.get("gt_ignore_flags", [])
-            if gt_ignore_flags == []:
-                instance_data[instance_key] = self._get_instance(results[result_key])
+            if "gt_ignore_flags" in results:
+                instance_data[instance_key] = self._get_instance(
+                    results[result_key])
                 continue
 
             valid_idx = np.where(results["gt_ignore_flags"] == 0)[0]
             ignore_idx = np.where(results["gt_ignore_flags"] == 1)[0]
 
             instance_data[instance_key] = self._get_instance(
-                results[result_key][valid_idx]
-            )
+                results[result_key][valid_idx])
             ignored_instance_data[instance_key] = self._get_instance(
-                results[result_key][ignore_idx]
-            )
+                results[result_key][ignore_idx])
 
         return instance_data, ignored_instance_data
 

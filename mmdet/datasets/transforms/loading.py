@@ -504,8 +504,10 @@ class LoadReIDDetAnnotations(LoadAnnotations):
         for detection_annotation in results.get("detection_annotations", []):
             gt_bboxes.append(detection_annotation["bbox"])
             gt_ignore_flags.append(
-                detection_annotation.get("ignore_flag", [])
+                detection_annotation.get("ignore_flag", 0)
             )
+        results["gt_ignore_flags"] = np.array(gt_ignore_flags, dtype=bool)
+
         if self.box_type is None:
             results["gt_bboxes"] = np.array(gt_bboxes, dtype=np.float32).reshape(
                 (-1, 4)
@@ -513,7 +515,6 @@ class LoadReIDDetAnnotations(LoadAnnotations):
         else:
             _, box_type_cls = get_box_type(self.box_type)
             results["gt_bboxes"] = box_type_cls(gt_bboxes, dtype=torch.float32)
-        results["gt_ignore_flags"] = np.array(gt_ignore_flags, dtype=bool)
 
     def _load_labels(self, results: dict) -> None:
         """Private function to load label annotations (detections and mmdet).
