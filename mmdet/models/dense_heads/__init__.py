@@ -34,6 +34,7 @@ from .nasfcos_head import NASFCOSHead
 from .paa_head import PAAHead
 from .pisa_retinanet_head import PISARetinaHead
 from .pisa_ssd_head import PISASSDHead
+from .reid_matching_layers import LabeledMatchingLayerQ, UnlabeledMatchingLayer
 from .reppoints_head import RepPointsHead
 from .retina_head import RetinaHead
 from .retina_sepbn_head import RetinaSepBNHead
@@ -66,5 +67,6 @@ __all__ = [
     'CenterNetUpdateHead', 'RTMDetHead', 'RTMDetSepBNHead', 'CondInstBboxHead',
     'CondInstMaskHead', 'RTMDetInsHead', 'RTMDetInsSepBNHead',
     'BoxInstBboxHead', 'BoxInstMaskHead', 'ConditionalDETRHead', 'DINOHead',
-    'ATSSVLFusionHead', 'DABDETRHead'
+    'ATSSVLFusionHead', 'DABDETRHead', 'LabeledMatchingLayerQ',
+    'UnlabeledMatchingLayer',
 ]
