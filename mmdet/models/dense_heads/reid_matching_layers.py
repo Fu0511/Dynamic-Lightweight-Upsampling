@@ -36,7 +36,7 @@ class LabeledMatchingQ(Function):
         return scores, positive_features, positive_person_ids
 
     @staticmethod
-    def backward(ctx, grad_output):
+    def backward(ctx, grad_output, pids_labels, feats):
         features, pid_labels = ctx.saved_tensors
         lookup_table = ctx.lookup_table
         momentum = ctx.momentum
