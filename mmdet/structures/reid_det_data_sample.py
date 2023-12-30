@@ -1,17 +1,28 @@
-from typing import List, Optional, Protocol, runtime_checkable
-from torch import LongTensor
+from typing import Protocol
+
 from mmengine.structures import BaseDataElement, InstanceData
+from torch import LongTensor
 
 from mmdet.structures.bbox import HorizontalBoxes
 
-# TODO Remove yapf linting
-
 
 class ReIDDetInstanceData(Protocol):
+    """
+    This is the implicit type annotations for the ReIDDetDataSample. For now
+    we only statically present the InstanceData object from ReID detection
+    tasks to have those fields
+    NOTE: ReIDDetInstanceData objects are not statically InstanceData. The
+    BaseReIDDetection class has its predict method returning this protocol
+    instead of a classic list of InstanceData which is not consistent with
+    the rest of mmdet. We might update the annotations from this base method
+    later and keep this protocol as implicit.
+    """
     # Detection labels, the name is confusing but we keep to be compatible
     # with existing Detector in mmdet.
     labels: LongTensor
+    #: The person IDs
     reid_labels: LongTensor
+    #: The detections
     bboxes: HorizontalBoxes
 
 
@@ -69,5 +80,5 @@ class ReIDDetDataSample(BaseDataElement):
         del self._ignored_instances
 
 
-ReIDDetSampleList = List[ReIDDetDataSample]
-OptReIDDetSampleList = Optional[ReIDDetSampleList]
+ReIDDetSampleList = list[ReIDDetDataSample]
+OptReIDDetSampleList = ReIDDetSampleList | None
