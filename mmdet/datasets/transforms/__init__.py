@@ -3,8 +3,8 @@ from .augment_wrappers import AutoAugment, RandAugment
 from .colorspace import (AutoContrast, Brightness, Color, ColorTransform,
                          Contrast, Equalize, Invert, Posterize, Sharpness,
                          Solarize, SolarizeAdd)
-from .formatting import (ImageToTensor, PackDetInputs, PackReIDInputs,
-                         PackTrackInputs, PackReIDDetInputs, ToTensor, Transpose)
+from .formatting import (ImageToTensor, PackDetInputs, PackReIDDetInputs,
+                         PackReIDInputs, PackTrackInputs, ToTensor, Transpose)
 from .frame_sampling import BaseFrameSample, UniformRefFrameSample
 from .geometric import (GeomTransform, Rotate, ShearX, ShearY, TranslateX,
                         TranslateY)
@@ -12,8 +12,8 @@ from .instaboost import InstaBoost
 from .loading import (FilterAnnotations, InferencerLoader, LoadAnnotations,
                       LoadEmptyAnnotations, LoadImageFromNDArray,
                       LoadMultiChannelImageFromFiles, LoadPanopticAnnotations,
-                      LoadProposals, LoadTrackAnnotations,
-                      LoadReIDDetAnnotations)
+                      LoadProposals, LoadReIDDetAnnotations,
+                      LoadTrackAnnotations)
 from .transformers_glip import GTBoxSubOne_GLIP, RandomFlip_GLIP
 from .transforms import (Albu, CachedMixUp, CachedMosaic, CopyPaste, CutOut,
                          Expand, FixScaleResize, FixShapeResize,

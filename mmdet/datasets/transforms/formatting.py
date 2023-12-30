@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence
 
 import numpy as np
 import torch
@@ -515,6 +515,153 @@ class PackReIDInputs(BaseTransform):
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
         repr_str += f'(meta_keys={self.meta_keys})'
+        return repr_str
+
+    def _get_img(self, results: dict) -> torch.Tensor:
+        assert "img" in results
+        img = results["img"]
+        if len(img.shape) < 3:
+            img = np.expand_dims(img, -1)
+
+        # To improve the computational speed by by 3-5 times, apply:
+        # If image is not contiguous, use
+        # `numpy.transpose()` followed by `numpy.ascontiguousarray()`
+        # If image is already contiguous, use
+        # `torch.permute()` followed by `torch.contiguous()`
+        # Refer to https://github.com/open-mmlab/mmdetection/pull/9533
+        # for more details
+        if img.flags.c_contiguous:
+            img = to_tensor(img).permute(2, 0, 1).contiguous()
+            return img
+
+        img = np.ascontiguousarray(img.transpose(2, 0, 1))
+        img = to_tensor(img)
+        return img
+
+    def _get_meta_info(self, results) -> dict:
+        img_meta = {}
+        for key in self.meta_keys:
+            assert key in results, (f"`{key}` is not found in `results`, "
+                                    f"the valid keys are {list(results)}.")
+            img_meta[key] = results[key]
+
+        return img_meta
+
+    def _get_instance(self, result) -> BaseBoxes | torch.Tensor:
+        return result if isinstance(result, BaseBoxes) else to_tensor(result)
+
+    def _get_instances(self, results) -> tuple[InstanceData, InstanceData]:
+        instance_data = InstanceData()
+        ignored_instance_data = InstanceData()
+        for result_key, instance_key in self.MAPPING_TABLE.items():
+            if result_key not in results:
+                continue
+
+            # No ignore flags -> just fill instance_data.
+            if "gt_ignore_flags" in results:
+                instance_data[instance_key] = self._get_instance(
+                    results[result_key])
+                continue
+
+            valid_idx = np.where(results["gt_ignore_flags"] == 0)[0]
+            ignore_idx = np.where(results["gt_ignore_flags"] == 1)[0]
+
+            instance_data[instance_key] = self._get_instance(
+                results[result_key][valid_idx])
+            ignored_instance_data[instance_key] = self._get_instance(
+                results[result_key][ignore_idx])
+
+        return instance_data, ignored_instance_data
+
+    def transform(self, results: dict) -> dict:
+        """Method to pack the input data.
+
+        Args:
+            results (dict): Result dict from the data pipeline.
+            It should contain the following keys:
+                - all self.meta_keys, it will be set in the metainfo attribute
+                of the ReIDDetDataSample.
+                - all MAPPING_TABLE keys, which is the content of the instances
+                of the ReIDDetDataSample.
+
+        Returns:
+            dict:
+            - 'inputs' (obj:`torch.Tensor`): The forward data of models.
+            - 'data_sample' (obj:`ReIDDetDataSample`): The annotation info of the
+                sample.
+        """
+        img = self._get_img(results)
+
+        data_samples = ReIDDetDataSample(metainfo=self._get_meta_info(results))
+
+        instance_data, ignored_instance_data = self._get_instances(results)
+        data_samples.gt_instances = instance_data
+        data_samples.ignored_instances = ignored_instance_data
+
+        packed_results = dict(
+            inputs=img,
+            data_samples=data_samples,
+        )
+
+        return packed_results
+
+
+@TRANSFORMS.register_module()
+class PackReIDDetInputs(BaseTransform):
+    """Pack the inputs data for the ReID detection.
+
+    This transform is compatible for one stage detector.
+
+    The ``img_meta`` item is always populated.  The contents of the
+    ``img_meta`` dictionary depends on ``meta_keys``. By default this includes:
+
+        - ``img_label``: id of the image (compliant with openmmlab 2.0 annotations)
+
+        - ``img_path``: path to the image file
+
+        - ``ori_shape``: original shape of the image as a tuple (h, w)
+
+        - ``img_shape``: shape of the image input to the network as a tuple \
+            (h, w).  Note that images may be zero padded on the \
+            bottom/right if the batch tensor is larger than this shape.
+
+        - ``scale_factor``: a float indicating the preprocessing scale
+
+        - ``flip``: a boolean indicating if image flip transform was used
+
+        - ``flip_direction``: the flipping direction
+
+    Args:
+        meta_keys (Sequence[str], optional): Meta keys to be converted to
+            ``mmcv.DataContainer`` and collected in ``data[img_metas]``.
+            Default: ``('img_id', 'img_path', 'ori_shape', 'img_shape',
+            'scale_factor', 'flip', 'flip_direction')``
+    """
+
+    DEFAULT_META_KEYS = (
+        "img_label",
+        "img_path",
+        "ori_shape",
+        "img_shape",
+        "scale_factor",
+        "flip",
+        "flip_direction",
+    )
+
+    # See ReIDDetInstanceData in reid_det_data_sample.py
+    # It maps keys from annotations dict to the field of InstanceData.
+    MAPPING_TABLE = {
+        "gt_bboxes": "bboxes",
+        "gt_bboxes_labels": "labels",
+        "gt_bboxes_person_ids": "reid_labels",
+    }
+
+    def __init__(self, meta_keys=DEFAULT_META_KEYS):
+        self.meta_keys = meta_keys
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f"(meta_keys={self.meta_keys})"
         return repr_str
 
     def _get_img(self, results: dict) -> torch.Tensor:
