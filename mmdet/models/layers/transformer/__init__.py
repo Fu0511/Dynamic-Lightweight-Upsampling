@@ -21,6 +21,8 @@ from .mask2former_layers import (Mask2FormerTransformerDecoder,
 from .utils import (MLP, AdaptivePadding, ConditionalAttention, DynamicConv,
                     PatchEmbed, PatchMerging, coordinate_to_encoding,
                     inverse_sigmoid, nchw_to_nlc, nlc_to_nchw)
+from .pstr_part_attention_layers import (PartAttentionDecoder,
+                                         PartAttentionDecoderLayer)
 
 __all__ = [
     'nlc_to_nchw', 'nchw_to_nlc', 'AdaptivePadding', 'PatchEmbed',
@@ -37,5 +39,6 @@ __all__ = [
     'CdnQueryGenerator', 'Mask2FormerTransformerEncoder',
     'Mask2FormerTransformerDecoderLayer', 'Mask2FormerTransformerDecoder',
     'GroundingDinoTransformerDecoderLayer', 'GroundingDinoTransformerEncoder',
-    'GroundingDinoTransformerDecoder'
+    'GroundingDinoTransformerDecoder' 'PartAttentionDecoder',
+    'PartAttentionDecoderLayer',
 ]

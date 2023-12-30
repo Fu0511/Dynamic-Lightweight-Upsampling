@@ -460,6 +460,70 @@ class LoadAnnotations(MMCV_LoadAnnotations):
         repr_str += f'backend_args={self.backend_args})'
         return repr_str
 
+@TRANSFORMS.register_module()
+class LoadReIDDetAnnotations(LoadAnnotations):
+    def __init__(
+        self,
+        with_mask: bool = True,
+        poly2mask: bool = False,
+        box_type: str = "hbox",
+        reduce_zero_label: bool = False,
+        ignore_index: int = 255,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            with_mask,
+            poly2mask,
+            box_type,
+            reduce_zero_label,
+            ignore_index,
+            **kwargs,
+        )
+        self.with_mask = False
+        self.with_seg = False
+
+    def _load_bboxes(self, results: dict) -> None:
+        """Private function to load bounding box annotations.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+        Returns:
+            dict: The dict contains loaded bounding box annotations.
+        """
+        gt_bboxes = []
+        gt_ignore_flags = []
+        for detection_annotation in results.get("detection_annotations", []):
+            gt_bboxes.append(detection_annotation["bbox"])
+            gt_ignore_flags.append(
+                detection_annotation.get("ignore_flag", 0)
+            )
+        results["gt_ignore_flags"] = np.array(gt_ignore_flags, dtype=bool)
+
+        if self.box_type is None:
+            results["gt_bboxes"] = np.array(gt_bboxes, dtype=np.float32).reshape(
+                (-1, 4)
+            )
+        else:
+            _, box_type_cls = get_box_type(self.box_type)
+            results["gt_bboxes"] = box_type_cls(gt_bboxes, dtype=torch.float32)
+
+    def _load_labels(self, results: dict) -> None:
+        """Private function to load label annotations (detections and mmdet).
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+
+        Returns:
+            dict: The dict contains loaded label annotations.
+        """
+        gt_bboxes_labels = []
+        gt_bboxes_person_ids = []
+        for detection_annotation in results.get("detection_annotations", []):
+            gt_bboxes_labels.append(detection_annotation["label"])
+            gt_bboxes_person_ids.append(detection_annotation["person_id"])
+        results["gt_bboxes_labels"] = np.array(gt_bboxes_labels, dtype=np.int64)
+        results["gt_bboxes_person_ids"] = np.array(gt_bboxes_person_ids, dtype=np.int64)
+
 
 @TRANSFORMS.register_module()
 class LoadPanopticAnnotations(LoadAnnotations):

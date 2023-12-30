@@ -2,6 +2,7 @@
 from .ade20k import (ADE20KInstanceDataset, ADE20KPanopticDataset,
                      ADE20KSegDataset)
 from .base_det_dataset import BaseDetDataset
+from .cuhk_sysu import CUHK_SYSU
 from .base_semseg_dataset import BaseSegDataset
 from .base_video_dataset import BaseVideoDataset
 from .cityscapes import CityscapesDataset
@@ -42,5 +43,6 @@ __all__ = [
     'ReIDDataset', 'YouTubeVISDataset', 'TrackAspectRatioBatchSampler',
     'ADE20KPanopticDataset', 'CocoCaptionDataset', 'RefCocoDataset',
     'BaseSegDataset', 'ADE20KSegDataset', 'CocoSegDataset',
-    'ADE20KInstanceDataset', 'iSAIDDataset', 'V3DetDataset', 'ConcatDataset'
+    'ADE20KInstanceDataset', 'iSAIDDataset', 'V3DetDataset', 'ConcatDataset',
+    'CUHK_SYSU',
 ]

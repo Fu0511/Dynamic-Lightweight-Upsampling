@@ -8,8 +8,8 @@ import torch
 from mmengine.structures import InstanceData, LabelData, PixelData
 
 from mmdet.datasets.transforms import (PackDetInputs, PackReIDInputs,
-                                       PackTrackInputs)
-from mmdet.structures import DetDataSample, ReIDDataSample
+                                       PackTrackInputs, PackReIDDetInputs)
+from mmdet.structures import DetDataSample, ReIDDataSample, ReIDDetDataSample
 from mmdet.structures.mask import BitmapMasks
 
 
@@ -244,3 +244,67 @@ class TestPackReIDInputs(unittest.TestCase):
         self.assertEqual(
             repr(self.pack_reid_inputs),
             f'PackReIDInputs(meta_keys={self.pack_reid_inputs.meta_keys})')
+
+class TestPackReIDDetInputs(unittest.TestCase):
+    def setUp(self):
+        """Setup the model and optimizer which are used in every test method.
+
+        TestCase calls functions in this order: setUp() -> testMethod() ->
+        tearDown() -> cleanUp()
+        """
+        data_prefix = osp.join(osp.dirname(__file__), "../../data")
+        img_path = osp.join(data_prefix, "color.jpg")
+        rng = np.random.RandomState(0)
+        self.results1 = {
+            "img_label": 1,
+            "img_path": img_path,
+            "ori_shape": (300, 400),
+            "img_shape": (600, 800),
+            "scale_factor": 2.0,
+            "flip": False,
+            "img": rng.rand(300, 400),
+            "gt_bboxes_labels": np.zeros(3),
+            "gt_ignore_flags": np.array([0, 0, 1], dtype=bool),
+        }
+        self.results2 = {
+            "img_label": 1,
+            "img_path": img_path,
+            "ori_shape": (300, 400),
+            "img_shape": (600, 800),
+            "scale_factor": 2.0,
+            "flip": False,
+            "img": rng.rand(300, 400),
+            "gt_bboxes_labels": np.zeros(3),
+            "gt_ignore_flags": np.array([0, 0, 0], dtype=bool),
+        }
+        self.meta_keys = ("img_label", "img_path", "ori_shape", "scale_factor", "flip")
+
+    def test_transform(self):
+        transform = PackReIDDetInputs(meta_keys=self.meta_keys)
+        results = transform(copy.deepcopy(self.results1))
+        self.assertIn("data_samples", results)
+        self.assertIsInstance(results["data_samples"], ReIDDetDataSample)
+        self.assertIsInstance(results["data_samples"].gt_instances, InstanceData)
+        self.assertIsInstance(results["data_samples"].ignored_instances, InstanceData)
+        self.assertEqual(len(results["data_samples"].gt_instances), 2)
+        self.assertEqual(len(results["data_samples"].ignored_instances), 1)
+
+    def test_transform_without_ignore(self):
+        transform = PackReIDDetInputs(meta_keys=self.meta_keys)
+        results = transform(copy.deepcopy(self.results2))
+        self.assertIn("data_samples", results)
+        self.assertIsInstance(results["data_samples"], ReIDDetDataSample)
+        self.assertIsInstance(results["data_samples"].gt_instances, InstanceData)
+        self.assertIsInstance(results["data_samples"].ignored_instances, InstanceData)
+        self.assertEqual(len(results["data_samples"].gt_instances), 3)
+        self.assertEqual(len(results["data_samples"].ignored_instances), 0)
+
+    def test_repr(self):
+        transform = PackReIDDetInputs(meta_keys=self.meta_keys)
+        self.assertEqual(
+            repr(transform), f"PackReIDDetInputs(meta_keys={self.meta_keys})"
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,13 +1,19 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
+import torch
 from mmcv.transforms import to_tensor
 from mmcv.transforms.base import BaseTransform
 from mmengine.structures import InstanceData, PixelData
 
 from mmdet.registry import TRANSFORMS
-from mmdet.structures import DetDataSample, ReIDDataSample, TrackDataSample
+from mmdet.structures import (
+    DetDataSample,
+    ReIDDataSample,
+    TrackDataSample,
+    ReIDDetDataSample,
+)
 from mmdet.structures.bbox import BaseBoxes
 
 
@@ -510,3 +516,91 @@ class PackReIDInputs(BaseTransform):
         repr_str = self.__class__.__name__
         repr_str += f'(meta_keys={self.meta_keys})'
         return repr_str
+
+    def _get_img(self, results: dict) -> torch.Tensor:
+        assert "img" in results
+        img = results["img"]
+        if len(img.shape) < 3:
+            img = np.expand_dims(img, -1)
+
+        # To improve the computational speed by by 3-5 times, apply:
+        # If image is not contiguous, use
+        # `numpy.transpose()` followed by `numpy.ascontiguousarray()`
+        # If image is already contiguous, use
+        # `torch.permute()` followed by `torch.contiguous()`
+        # Refer to https://github.com/open-mmlab/mmdetection/pull/9533
+        # for more details
+        if img.flags.c_contiguous:
+            img = to_tensor(img).permute(2, 0, 1).contiguous()
+            return img
+
+        img = np.ascontiguousarray(img.transpose(2, 0, 1))
+        img = to_tensor(img)
+        return img
+
+    def _get_meta_info(self, results) -> dict:
+        img_meta = {}
+        for key in self.meta_keys:
+            assert key in results, (f"`{key}` is not found in `results`, "
+                                    f"the valid keys are {list(results)}.")
+            img_meta[key] = results[key]
+
+        return img_meta
+
+    def _get_instance(self, result) -> BaseBoxes | torch.Tensor:
+        return result if isinstance(result, BaseBoxes) else to_tensor(result)
+
+    def _get_instances(self, results) -> tuple[InstanceData, InstanceData]:
+        instance_data = InstanceData()
+        ignored_instance_data = InstanceData()
+        for result_key, instance_key in self.MAPPING_TABLE.items():
+            if result_key not in results:
+                continue
+
+            # No ignore flags -> just fill instance_data.
+            if "gt_ignore_flags" in results:
+                instance_data[instance_key] = self._get_instance(
+                    results[result_key])
+                continue
+
+            valid_idx = np.where(results["gt_ignore_flags"] == 0)[0]
+            ignore_idx = np.where(results["gt_ignore_flags"] == 1)[0]
+
+            instance_data[instance_key] = self._get_instance(
+                results[result_key][valid_idx])
+            ignored_instance_data[instance_key] = self._get_instance(
+                results[result_key][ignore_idx])
+
+        return instance_data, ignored_instance_data
+
+    def transform(self, results: dict) -> dict:
+        """Method to pack the input data.
+
+        Args:
+            results (dict): Result dict from the data pipeline.
+            It should contain the following keys:
+                - all self.meta_keys, it will be set in the metainfo attribute
+                of the ReIDDetDataSample.
+                - all MAPPING_TABLE keys, which is the content of the instances
+                of the ReIDDetDataSample.
+
+        Returns:
+            dict:
+            - 'inputs' (obj:`torch.Tensor`): The forward data of models.
+            - 'data_sample' (obj:`ReIDDetDataSample`): The annotation info of the
+                sample.
+        """
+        img = self._get_img(results)
+
+        data_samples = ReIDDetDataSample(metainfo=self._get_meta_info(results))
+
+        instance_data, ignored_instance_data = self._get_instances(results)
+        data_samples.gt_instances = instance_data
+        data_samples.ignored_instances = ignored_instance_data
+
+        packed_results = dict(
+            inputs=img,
+            data_samples=data_samples,
+        )
+
+        return packed_results

@@ -82,7 +82,12 @@ class TripletLoss(BaseModule):
         Returns:
             torch.Tensor: triplet loss.
         """
-        if self.hard_mining:
-            return self.hard_mining_triplet_loss_forward(inputs, targets)
-        else:
+        if not self.hard_mining:
             raise NotImplementedError()
+
+        # Only one positive in the sample, triplet cannot be applied
+        # Early exit
+        if len(set(target.cpu().numpy().item() for target in targets)) < 2:
+            return torch.tensor(0, device=targets.device)
+
+        return self.hard_mining_triplet_loss_forward(inputs, targets)

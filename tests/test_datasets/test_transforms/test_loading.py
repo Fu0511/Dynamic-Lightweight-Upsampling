@@ -13,7 +13,9 @@ from mmdet.datasets.transforms import (FilterAnnotations, LoadAnnotations,
                                        LoadEmptyAnnotations,
                                        LoadImageFromNDArray,
                                        LoadMultiChannelImageFromFiles,
-                                       LoadProposals, LoadTrackAnnotations)
+    LoadProposals,
+    LoadTrackAnnotations,
+)
 from mmdet.evaluation import INSTANCE_OFFSET
 from mmdet.structures.mask import BitmapMasks, PolygonMasks
 
@@ -145,6 +147,80 @@ class TestLoadAnnotations(unittest.TestCase):
                               'with_seg=False, poly2mask=True, '
                               "imdecode_backend='cv2', "
                               'backend_args=None)'))
+class TestLoadReIDDetAnnotations(unittest.TestCase):
+    def setUp(self):
+        """Setup the model and optimizer which are used in every test method.
+
+        TestCase calls functions in this order: setUp() -> testMethod() ->
+        tearDown() -> cleanUp()
+        """
+        data_prefix = osp.join(osp.dirname(__file__), "../../data")
+        self.results = {
+            "ori_shape": (300, 400),
+            "detection_annotations": [
+                {
+                    "bbox": [0, 0, 10, 20],
+                    "label": 0,
+                    "person_id": 1,
+                    "ignore_flag": 0,
+                },
+                {
+                    "bbox": [10, 10, 110, 120],
+                    "label": 0,
+                    "person_id": 2,
+                    "ignore_flag": 0,
+                },
+                {
+                    "bbox": [50, 50, 60, 80],
+                    "label": 0,
+                    "person_id": 3,
+                    "ignore_flag": 1,
+                },
+            ],
+        }
+
+    def test_load_bboxes(self):
+        transform = LoadReIDDetAnnotations(
+            with_bbox=True,
+            with_label=False,
+            with_seg=False,
+            with_mask=False,
+            box_type=None,
+        )
+        results = transform(copy.deepcopy(self.results))
+        self.assertIn("gt_bboxes", results)
+        self.assertTrue(
+            (
+                results["gt_bboxes"]
+                == np.array([[0, 0, 10, 20], [10, 10, 110, 120], [50, 50, 60, 80]])
+            ).all()
+        )
+        self.assertEqual(results["gt_bboxes"].dtype, np.float32)
+        self.assertTrue((results["gt_ignore_flags"] == np.array([0, 0, 1])).all())
+        self.assertEqual(results["gt_ignore_flags"].dtype, bool)
+
+    def test_load_labels(self):
+        transform = LoadReIDDetAnnotations(
+            with_bbox=False,
+            with_label=True,
+            with_seg=False,
+            with_mask=False,
+        )
+        results = transform(copy.deepcopy(self.results))
+        self.assertIn("gt_bboxes_labels", results)
+        self.assertTrue((results["gt_bboxes_labels"] == np.array([0, 0, 0])).all())
+        self.assertEqual(results["gt_bboxes_labels"].dtype, np.int64)
+        self.assertTrue((results["gt_bboxes_person_ids"] == np.array([1, 2, 3])).all())
+        self.assertEqual(results["gt_bboxes_person_ids"].dtype, np.int64)
+
+    def test_no_seg_and_no_mask(self):
+        transform = LoadReIDDetAnnotations(
+            with_bbox=False,
+            with_label=False,
+            with_seg=True,
+            with_mask=True,
+        )
+        assert not transform.with_seg and not transform.with_mask
 
 
 class TestFilterAnnotations(unittest.TestCase):
