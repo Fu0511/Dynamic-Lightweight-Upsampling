@@ -1,0 +1,36 @@
+name: "mmdet-train"
+version: "3"
+
+services:
+  train:
+    build:
+      target: train
+      context: .
+      args:
+        PYTORCH_VERSION: '2.0.1'
+        CUDA_VERSION: '11.7'
+        CUDNN_VERSION: '8'
+        # Fill with the correct commit of the repo
+        # Set the SHA of the commit, ensure logging exact version of the repo
+        COMMIT: ${COMMIT}
+    environment:
+        TERM: 'screen-256color'
+
+    tty: true
+    init: true
+    entrypoint: /entrypoint.sh
+
+    volumes:
+      - torch_cache:/root/.cache/torch
+      # Insert path of the root folder of the dataset
+      - ${DATASET_PATH}:/dataset:ro
+    shm_size: 16G
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+
+volumes:
+  torch_cache:
