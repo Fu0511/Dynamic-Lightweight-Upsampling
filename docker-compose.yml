@@ -13,6 +13,11 @@ services:
         # Fill with the correct commit of the repo
         # Set the SHA of the commit, ensure logging exact version of the repo
         COMMIT: ${COMMIT}
+    command: >
+      python tools/train.py 
+      configs/reid/detection/pstr_r50.py
+      --cfg-options
+      train_dataloader.dataset.data_root=/dataset/mmlab
     environment:
         TERM: 'screen-256color'
 

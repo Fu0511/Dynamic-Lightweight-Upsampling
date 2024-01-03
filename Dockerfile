@@ -27,8 +27,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Install MMEngine and MMCV
-RUN pip install openmim && \
-    mim install "mmengine>=0.7.1" "mmcv>=2.0.0rc4"
+RUN pip install --no-cache-dir --upgrade pip setuptools
+RUN pip install --no-cache-dir "mmengine>=0.7.1" "mmcv>=2.0.0rc4"
 
 # ------------------- (END) BUILD MMDET/MMCV --------------------
 
@@ -41,25 +41,25 @@ FROM pytorch/pytorch:${PYTORCH_VERSION}-cuda${CUDA_VERSION}-cudnn${CUDNN_VERSION
 
 ENV SITE_PACKAGES="/opt/conda/lib/python3.10/site-packages"
 COPY --from=built-mmdet ${SITE_PACKAGES}/mmcv ${SITE_PACKAGES}/mmcv
-COPY --from=built-mmdet ${SITE_PACKAGES}/mmcv-2.0.1.dist-info ${SITE_PACKAGES}/mmcv-2.0.1.dist-info
+COPY --from=built-mmdet ${SITE_PACKAGES}/mmcv-2.1.0.dist-info ${SITE_PACKAGES}/mmcv-2.1.0.dist-info
 COPY --from=built-mmdet ${SITE_PACKAGES}/mmengine ${SITE_PACKAGES}/mmengine
-COPY --from=built-mmdet ${SITE_PACKAGES}/mmengine-0.8.4.dist-info ${SITE_PACKAGES}/mmengine-0.8.4.dist-info
-COPY --from=built-mmdet ${SITE_PACKAGES}/mim ${SITE_PACKAGES}/mim
-COPY --from=built-mmdet ${SITE_PACKAGES}/openmim-0.3.9.dist-info ${SITE_PACKAGES}/openmim-0.3.9.dist-info
+COPY --from=built-mmdet ${SITE_PACKAGES}/mmengine-0.10.2.dist-info ${SITE_PACKAGES}/mmengine-0.10.2.dist-info
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
-    apt-get install -y build-essential ffmpeg git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 && \
+    apt-get install -y vim build-essential ffmpeg git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PIP_ARGS="--no-cache-dir"
-RUN pip install ${PIP_ARGS} --upgrade pip setuptools
+RUN pip install ${PIP_ARGS} --upgrade pip setuptools && \
+		# https://stackoverflow.com/questions/71496208/how-can-i-automatically-install-all-missing-dependencies-from-pip-check
+		pip check | sed -rn 's/.*requires ([^,]+),.*/\1/p' | xargs pip install
 
 
 COPY . .
 ARG COMMIT
 RUN echo "Training with commit: ${COMMIT}" && \
     git checkout --force ${COMMIT} && \
-    pip install ${PIP_ARGS} .
+    pip install ${PIP_ARGS} -e .
 # ------------------- (END) DEV ENVIRONNEMENT --------------------
