@@ -49,19 +49,17 @@ COPY --from=built-mmdet ${SITE_PACKAGES}/openmim-0.3.9.dist-info ${SITE_PACKAGES
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
-    apt-get install -y ffmpeg git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 && \
+    apt-get install -y build-essential ffmpeg git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PIP_ARGS="--no-cache-dir"
-RUN pip install ${PIP_ARGS} --upgrade pip mmpretrain
-RUN pip install ${PIP_ARGS} --upgrade --upgrade-strategy only-if-needed mmcv mmengine openmim
 RUN pip install ${PIP_ARGS} --upgrade pip setuptools
 
 
 COPY . .
 ARG COMMIT
 RUN echo "Training with commit: ${COMMIT}" && \
-    git checkout ${COMMIT} && \
+    git checkout --force ${COMMIT} && \
     pip install ${PIP_ARGS} .
 # ------------------- (END) DEV ENVIRONNEMENT --------------------

@@ -1,6 +1,6 @@
 _base_ = [
-    "/home/reusm/code/mmdet/configs/_base_/default_runtime.py",
-    "/home/reusm/code/mmdet/configs/_base_/datasets/cuhk_sysu.py",
+    "../../_base_/default_runtime.py",
+    "../../_base_/datasets/cuhk_sysu.py",
 ]
 
 detector = dict(
