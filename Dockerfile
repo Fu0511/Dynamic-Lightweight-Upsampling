@@ -53,6 +53,7 @@ RUN apt-get update && \
 
 ENV PIP_ARGS="--no-cache-dir"
 RUN pip install ${PIP_ARGS} --upgrade pip setuptools && \
+		# Fix the missing deps caused by the COPY command.
 		# https://stackoverflow.com/questions/71496208/how-can-i-automatically-install-all-missing-dependencies-from-pip-check
 		pip check | sed -rn 's/.*requires ([^,]+),.*/\1/p' | xargs pip install
 
