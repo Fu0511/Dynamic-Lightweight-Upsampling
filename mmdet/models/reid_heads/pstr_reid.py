@@ -279,7 +279,7 @@ class PSTRHeadReID(BaseModel):
         loss_oim = self.oim_weight_single_scale_layer * F.nll_loss(
             focal_probabilities,
             only_assigned_person_ids,
-            reduction="none",
+            reduction="sum",
             ignore_index=-1)
 
         if not self.flag_tri:
