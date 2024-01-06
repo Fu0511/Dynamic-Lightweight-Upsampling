@@ -5,3 +5,7 @@
 !mmdet/
 !requirements/
 !tools/
+
+.dockerignore
+docker-compose.yml
+Dockerfile

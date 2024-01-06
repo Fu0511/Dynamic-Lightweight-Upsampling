@@ -1,0 +1,16 @@
+terminaltables
+opencv-python-headless
+shapely
+scipy
+pycocotools
+matplotlib
+python-dateutil
+pyparsing
+kiwisolver
+fonttools
+cycler
+contourpy
+yapf
+addict
+rich
+termcolor

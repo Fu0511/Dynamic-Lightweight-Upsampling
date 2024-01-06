@@ -4,7 +4,7 @@ version: "3"
 services:
   train:
     build:
-      target: train
+      target: runtime
       context: .
       args:
         PYTORCH_VERSION: '2.0.1'
@@ -17,7 +17,8 @@ services:
       python tools/train.py 
       configs/reid/detection/pstr_r50.py
       --cfg-options
-      train_dataloader.dataset.data_root=/dataset/mmlab
+      train_dataloader.dataset.data_root=/dataset
+      train_dataloader.dataset.ann_file=annotations/annotations_train.json
     environment:
         TERM: 'screen-256color'
 
@@ -28,6 +29,7 @@ services:
       - torch_cache:/root/.cache/torch
       # Insert path of the root folder of the dataset
       - ${DATASET_PATH}:/dataset:ro
+      - ${OUTPUT_PATH}:/workspace/work_dirs
     shm_size: 16G
     deploy:
       resources:
