@@ -1,6 +1,3 @@
-from collections import defaultdict
-from typing import List, Tuple
-
 import torch
 import torch.nn as nn
 from mmengine.model import BaseModel
@@ -82,7 +79,7 @@ class PSTRHeadReID(BaseModel):
         references: Tensor,
         spatial_shapes: Tensor,
         valid_ratios: Tensor,
-        multi_scale_features_maps_flattened: List[Tensor],
+        multi_scale_features_maps_flattened: list[Tensor],
     ) -> Tensor:
         """
         Compute raw ReID features from detector and features maps.
@@ -97,7 +94,7 @@ class PSTRHeadReID(BaseModel):
                 detection, before flattening. (n_used_detection, 2)
             valid_ratios (Tensor): Valid ratios of detections, in case some are
                 annotatated to be ignored. (bs, ratio_dim, 2).
-            multi_scale_features_maps (List[Tensor]): The features maps
+            multi_scale_features_maps (list[Tensor]): The features maps
                 from the backbone/neck. A list of n_scales, each element
                 is (bs, , x_dim*y_dim, n_dim_neck).
 
@@ -162,7 +159,7 @@ class PSTRHeadReID(BaseModel):
         references: Tensor,
         spatial_shapes: Tensor,
         valid_ratios: Tensor,
-        multi_scale_features_maps: Tuple[Tensor],
+        multi_scale_features_maps: tuple[Tensor],
     ) -> list[Tensor]:
         """
         Compute ReID features from detector and features maps.
@@ -177,7 +174,7 @@ class PSTRHeadReID(BaseModel):
                 detection, before flattening. (n_used_detection, 2)
             valid_ratios (Tensor): Valid ratios of detections, in case some are
                 annotatated to be ignored. (bs, ratio_dim, 2).
-            multi_scale_features_maps (Tuple[Tensor]): The features maps
+            multi_scale_features_maps (tuple[Tensor]): The features maps
                 from the backbone/neck. A n_scales-tuple, each element
                 is (bs, n_dim_neck, x_dim, y_dim).
 
@@ -206,7 +203,7 @@ class PSTRHeadReID(BaseModel):
         )
 
         # [layers_level, ...] (scales)
-        reid_outputs: List[Tensor] = [
+        reid_outputs: list[Tensor] = [
             inter_reid_state -
             torch.mean(inter_reid_state, dim=2, keepdim=True)
             for inter_reid_state in inter_reid_states
@@ -279,7 +276,7 @@ class PSTRHeadReID(BaseModel):
         probabilities = F.softmax(matching_scores, dim=1)
         focal_probabilities = ((1 - probabilities + 1e-12)**2 *
                                (probabilities + 1e-12).log())
-        loss_oim = F.nll_loss(
+        loss_oim = self.oim_weight_single_scale_layer * F.nll_loss(
             focal_probabilities,
             only_assigned_person_ids,
             reduction="none",
@@ -292,8 +289,9 @@ class PSTRHeadReID(BaseModel):
             (assigned_reid_features, labeled_reid_features))
         positive_person_ids = torch.cat(
             (only_assigned_person_ids, labeled_person_ids))
-        loss_triplet = self.triplet_loss(positive_reid_features,
-                                         positive_person_ids)
+        loss_triplet = (
+            self.triplet_weight_single_scale_layer *
+            self.triplet_loss(positive_reid_features, positive_person_ids))
 
         return {oim_loss_key: loss_oim, triplet_loss_key: loss_triplet}
 
@@ -333,7 +331,7 @@ class PSTRHeadReID(BaseModel):
             i_layer, i_scale)
         oim_loss_key = LOSS_DICT_KEY_TEMPLATE_OIM.format(i_layer, i_scale)
 
-        batch_reid_loss: dict[str, Tensor] = defaultdict()
+        batch_reid_loss: dict[str, Tensor] = {}
         for i_sample in range(batch_size):
             sample_reid_loss = self.loss_single_layer_scale_sample(
                 batch_reid_features[i_sample],
@@ -344,13 +342,13 @@ class PSTRHeadReID(BaseModel):
                 i_layer,
             )
 
-            for sample_loss_key, sample_loss in sample_reid_loss.items():
-                if sample_loss_key in batch_reid_loss:
-                    batch_reid_loss[sample_loss_key] += (
-                        sample_loss * self.oim_weight_single_scale_layer)
-                else:
-                    batch_reid_loss[sample_loss_key] = (
-                        sample_loss * self.triplet_weight_single_scale_layer)
+            # Init batch_reid_loss
+            if not batch_reid_loss:
+                for sample_loss_key, sample_loss in sample_reid_loss.items():
+                    batch_reid_loss[sample_loss_key] = sample_loss
+            else:
+                for sample_loss_key, sample_loss in sample_reid_loss.items():
+                    batch_reid_loss[sample_loss_key] += sample_loss
 
         # Average of losses
         # NOTE: I am not sure that the matching layers losses support reduce
@@ -406,7 +404,7 @@ class PSTRHeadReID(BaseModel):
         references: Tensor,
         spatial_shapes: Tensor,
         valid_ratios: Tensor,
-        multi_scale_features_maps: Tuple[Tensor],
+        multi_scale_features_maps: tuple[Tensor],
         all_layers_batch_assigned_person_ids: Tensor,
         data_samples: ReIDDetSampleList,
     ) -> dict[str, Tensor]:
@@ -423,7 +421,7 @@ class PSTRHeadReID(BaseModel):
                 detection, before flattening. (n_used_detection, 2)
             valid_ratios (Tensor): Valid ratios of detections, in case some are
                 annotatated to be ignored. (bs, ratio_dim, 2).
-            multi_scale_features_maps (Tuple[Tensor]): The features maps
+            multi_scale_features_maps (tuple[Tensor]): The features maps
                 from the backbone/neck. A n_scales-tuple, each element
                 is (bs, n_dim_neck, x_dim, y_dim).
             all_layers_batch_assigned_person_ids (Tensor): Result of the
