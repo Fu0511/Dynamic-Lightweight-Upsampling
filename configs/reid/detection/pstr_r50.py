@@ -1,6 +1,6 @@
 _base_ = [
-    "/home/reusm/code/mmdet/configs/_base_/default_runtime.py",
-    "/home/reusm/code/mmdet/configs/_base_/datasets/cuhk_sysu.py",
+    "../../_base_/default_runtime.py",
+    "../../_base_/datasets/cuhk_sysu.py",
 ]
 
 detector = dict(
@@ -100,7 +100,7 @@ reid = dict(  # PSTRHeadReID
             batch_first=True,
         ),
     ),
-    num_person=5532,
+    num_person=7792,
     flag_tri=True,
     queue_size=5000)
 
@@ -149,7 +149,8 @@ param_scheduler = [
         end_factor=1,
         by_epoch=False,
         begin=0,
-        end=500,
+        end=63, # 500 // 8 (sysu batch size) + 1
+        # end=(500 // batch_size) + 1, # 500 samples ~= 500 / batch_size iterations
     ),
     # Epoch update
     dict(type='MultiStepLR', milestones=[19, 23], gamma=0.1)

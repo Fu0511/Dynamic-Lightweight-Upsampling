@@ -1,0 +1,42 @@
+name: "mmdet-train"
+version: "3"
+
+services:
+  train:
+    build:
+      target: runtime
+      context: .
+      args:
+        PYTORCH_VERSION: '2.0.1'
+        CUDA_VERSION: '11.7'
+        CUDNN_VERSION: '8'
+        # Fill with the correct commit of the repo
+        # Set the SHA of the commit, ensure logging exact version of the repo
+        COMMIT: ${COMMIT}
+    command: >
+      python tools/train.py 
+      configs/reid/detection/pstr_r50.py
+      --cfg-options
+      train_dataloader.dataset.data_root=/dataset
+      train_dataloader.dataset.ann_file=annotations/annotations_train.json
+    environment:
+        TERM: 'screen-256color'
+
+    tty: true
+    init: true
+
+    volumes:
+      - torch_cache:/root/.cache/torch
+      # Insert path of the root folder of the dataset
+      - ${DATASET_PATH}:/dataset:ro
+      - ${OUTPUT_PATH}:/workspace/work_dirs
+    shm_size: 16G
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+
+volumes:
+  torch_cache:

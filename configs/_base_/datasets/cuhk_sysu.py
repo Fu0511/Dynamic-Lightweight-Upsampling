@@ -37,13 +37,13 @@ train_pipeline = [
 
 train_dataloader = dict(
     shuffle=True,
-    batch_size=1,
-    num_workers=2,
+    batch_size=8,
+    num_workers=4,
     persistent_workers=True,
     dataset=dict(
         type=dataset_type,
         filter_cfg=dict(filter_empty_gt=False),
-        ann_file="annotations/annotations_sysu_train.json",
+        ann_file="annotations/annotations_train.json",
         data_root=data_root,
         pipeline=train_pipeline,
     ),
