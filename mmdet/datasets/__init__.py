@@ -13,17 +13,22 @@ from .coco_semantic import CocoSegDataset
 from .crowdhuman import CrowdHumanDataset
 from .dataset_wrappers import ConcatDataset, MultiImageMixDataset
 from .deepfashion import DeepFashionDataset
+from .dod import DODDataset
 from .dsdl import DSDLDetDataset
+from .flickr30k import Flickr30kDataset
 from .isaid import iSAIDDataset
 from .lvis import LVISDataset, LVISV1Dataset, LVISV05Dataset
+from .mdetr_style_refcoco import MDETRStyleRefCocoDataset
 from .mot_challenge_dataset import MOTChallengeDataset
 from .objects365 import Objects365V1Dataset, Objects365V2Dataset
+from .odvg import ODVGDataset
 from .openimages import OpenImagesChallengeDataset, OpenImagesDataset
 from .refcoco import RefCocoDataset
 from .reid_dataset import ReIDDataset
 from .samplers import (AspectRatioBatchSampler, ClassAwareSampler,
-                       GroupMultiSourceSampler, MultiSourceSampler,
-                       TrackAspectRatioBatchSampler, TrackImgSampler)
+                       CustomSampleSizeSampler, GroupMultiSourceSampler,
+                       MultiSourceSampler, TrackAspectRatioBatchSampler,
+                       TrackImgSampler)
 from .utils import get_loading_pipeline
 from .v3det import V3DetDataset
 from .voc import VOCDataset
@@ -44,5 +49,6 @@ __all__ = [
     'ADE20KPanopticDataset', 'CocoCaptionDataset', 'RefCocoDataset',
     'BaseSegDataset', 'ADE20KSegDataset', 'CocoSegDataset',
     'ADE20KInstanceDataset', 'iSAIDDataset', 'V3DetDataset', 'ConcatDataset',
-    'CUHK_SYSU',
+    'ODVGDataset', 'MDETRStyleRefCocoDataset', 'DODDataset',
+    'CustomSampleSizeSampler', 'Flickr30kDataset', 'CUHK_SYSU',
 ]
