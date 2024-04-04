@@ -14,20 +14,26 @@ from tqdm import tqdm
 
 class COCOevalMP(COCOeval):
 
-    def __init__(self, cocoGt=None, cocoDt=None, iouType='bbox', num_proc=8,
-                 tree_ann_path='data/V3Det/annotations/v3det_2023_v1_category_tree.json',
+    def __init__(self,
+                 cocoGt=None,
+                 cocoDt=None,
+                 iouType='bbox',
+                 num_proc=8,
+                 tree_ann_path='data/V3Det/annotations/v3det_'
+                 '2023_v1_category_tree.json',
                  ignore_parent_child_gts=True):
-        '''
-        Initialize CocoEval using coco APIs for gt and dt
+        """Initialize CocoEval using coco APIs for gt and dt.
+
         :param cocoGt: coco object with ground truth annotations
         :param cocoDt: coco object with detection results
         :return: None
-        '''
+        """
         if not iouType:
             print('iouType not specified. use default iouType segm')
         self.cocoGt = cocoGt  # ground truth COCO API
         self.cocoDt = cocoDt  # detections COCO API
-        self.evalImgs = defaultdict(list)  # per-image per-category evaluation results [KxAxI] elements
+        self.evalImgs = defaultdict(
+            list)  # per-image per-category evaluation results [KxAxI] elements
         self.eval = {}  # accumulated evaluation results
         self._gts = defaultdict(list)  # gt for evaluation
         self._dts = defaultdict(list)  # dt for evaluation
@@ -41,7 +47,7 @@ class COCOevalMP(COCOeval):
         if not mmengine.exists(tree_ann_path):
             print(f'{tree_ann_path} not exist')
             raise FileNotFoundError
-        if not cocoGt is None:
+        if cocoGt is not None:
             self.params.imgIds = sorted(cocoGt.getImgIds())
             self.params.catIds = sorted(cocoGt.getCatIds())
         # split base novel cat ids
@@ -118,12 +124,15 @@ class COCOevalMP(COCOeval):
                     if descendant_id not in treeid2catid:
                         continue
                     descendant_catid = treeid2catid[descendant_id]
-                    ancestor2descendant_catid[int(cat_id)].add(int(descendant_catid))
+                    ancestor2descendant_catid[int(cat_id)].add(
+                        int(descendant_catid))
             self.ancestor2descendant_catid = ancestor2descendant_catid
-            # If a gt has child category cat_A, and dts of this image has this category, add this gt to gt<img_id, cat_A>
+            # If a gt has child category cat_A, and dts of this image
+            # has this category, add this gt to gt<img_id, cat_A>
             for gt in gts:
                 ignore_cats = []
-                for child_cat_id in self.ancestor2descendant_catid[gt['category_id']]:
+                for child_cat_id in self.ancestor2descendant_catid[
+                        gt['category_id']]:
                     if len(self._dts[gt['image_id'], child_cat_id]) > 0:
                         ignore_cats.append(child_cat_id)
                 if len(ignore_cats) == 0:
@@ -191,7 +200,8 @@ class COCOevalMP(COCOeval):
         all_params_len = len(catids_chunk) * len(p.areaRng) * len(p.imgIds)
         evalImgs = [
             self.evaluateImg(imgId, catId, areaRng, maxDet)
-            for catId, areaRng, imgId in tqdm(all_params, total=all_params_len)
+            for catId, areaRng, imgId in tqdm(
+                all_params, total=all_params_len)
         ]
         return evalImgs
 
@@ -341,23 +351,33 @@ class COCOevalMP(COCOeval):
             return stats
 
         def _summarizeOVDs():
-            def _summarize(ap=1, iouThr=None, areaRng='all', maxDets=100, cat_kind=None):
+
+            def _summarize(ap=1,
+                           iouThr=None,
+                           areaRng='all',
+                           maxDets=100,
+                           cat_kind=None):
                 assert cat_kind in ('Base', 'Novel')
                 if cat_kind == 'Novel':
                     cat_inds = self.novel_inds
                 else:
                     cat_inds = self.base_inds
                 p = self.params
-                iStr = ' {:<18} {} @[ IoU={:<9} | area={:>6s} | maxDets={:>3d} ] = {:0.3f}'  # noqa
-                titleStr = f'{cat_kind} Average Precision' if ap == 1 else f'{cat_kind} Average Recall'
+                iStr = (' {:<18} {} @[ IoU={:<9} | area={:>6s} | '
+                        'maxDets={:>3d} ] = {:0.3f}')  # noqa
+                titleStr = f'{cat_kind} Average Precision' if ap == 1 \
+                    else f'{cat_kind} Average Recall'
                 typeStr = '(AP)' if ap == 1 else '(AR)'
-                iouStr = '{:0.2f}:{:0.2f}'.format(p.iouThrs[0], p.iouThrs[-1]) \
-                    if iouThr is None else '{:0.2f}'.format(iouThr)
+                iouStr = '{:0.2f}:{:0.2f}'.format(
+                    p.iouThrs[0], p.iouThrs[-1]) if (
+                        iouThr is None) else '{:0.2f}'.format(iouThr)
 
                 aind = [
                     i for i, aRng in enumerate(p.areaRngLbl) if aRng == areaRng
                 ]
-                mind = [i for i, mDet in enumerate(p.maxDets) if mDet == maxDets]
+                mind = [
+                    i for i, mDet in enumerate(p.maxDets) if mDet == maxDets
+                ]
                 if ap == 1:
                     # dimension of precision: [TxRxKxAxM]
                     s = self.eval['precision']
@@ -385,29 +405,46 @@ class COCOevalMP(COCOeval):
             stats = []
             for cat_kind in ('Base', 'Novel'):
                 print(f'\nSummarize {cat_kind} Classes:')
-                stats.append(_summarize(1, maxDets=self.params.maxDets[-1], cat_kind=cat_kind))
                 stats.append(
-                    _summarize(1, iouThr=.5, maxDets=self.params.maxDets[-1], cat_kind=cat_kind))
+                    _summarize(
+                        1, maxDets=self.params.maxDets[-1], cat_kind=cat_kind))
                 stats.append(
-                    _summarize(1, iouThr=.75, maxDets=self.params.maxDets[-1], cat_kind=cat_kind))
+                    _summarize(
+                        1,
+                        iouThr=.5,
+                        maxDets=self.params.maxDets[-1],
+                        cat_kind=cat_kind))
+                stats.append(
+                    _summarize(
+                        1,
+                        iouThr=.75,
+                        maxDets=self.params.maxDets[-1],
+                        cat_kind=cat_kind))
                 for area_rng in ('small', 'medium', 'large'):
                     stats.append(
                         _summarize(
-                            1, areaRng=area_rng, maxDets=self.params.maxDets[-1], cat_kind=cat_kind))
+                            1,
+                            areaRng=area_rng,
+                            maxDets=self.params.maxDets[-1],
+                            cat_kind=cat_kind))
                 for max_det in self.params.maxDets:
-                    stats.append(_summarize(0, maxDets=max_det, cat_kind=cat_kind))
+                    stats.append(
+                        _summarize(0, maxDets=max_det, cat_kind=cat_kind))
                 for area_rng in ('small', 'medium', 'large'):
                     stats.append(
                         _summarize(
-                            0, areaRng=area_rng, maxDets=self.params.maxDets[-1], cat_kind=cat_kind))
+                            0,
+                            areaRng=area_rng,
+                            maxDets=self.params.maxDets[-1],
+                            cat_kind=cat_kind))
             stats = np.array(stats)
 
             print()
             print('-' * 45)
-            print(f'Compute OVD AP: (bAP + 3 * nAP) / 4 = {(stats[0] + 3 * stats[10]) / 4.:.4f}')
+            print(f'Compute OVD AP: (bAP + 3 * nAP) / 4 '
+                  f'= {(stats[0] + 3 * stats[10]) / 4.:.4f}')
             print('-' * 45)
             return stats
-
 
         def _summarizeKps():
             stats = np.zeros((10, ))
