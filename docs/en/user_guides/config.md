@@ -207,6 +207,7 @@ train_dataloader = dict(   # Train dataloader config
     batch_size=2,  # Batch size of a single GPU
     num_workers=2,  # Worker to pre-fetch data for each single GPU
     persistent_workers=True,  # If ``True``, the dataloader will not shut down the worker processes after an epoch end, which can accelerate training speed.
+    collate_fn=dict(type='default_collate'),  # Required to collate a list of tensors into a tensor with a batch dimension
     sampler=dict(  # training data sampler
         type='DefaultSampler',  # DefaultSampler which supports both distributed and non-distributed training. Refer to https://mmengine.readthedocs.io/en/latest/api/generated/mmengine.dataset.DefaultSampler.html#mmengine.dataset.DefaultSampler
         shuffle=True),  # randomly shuffle the training data in each epoch
