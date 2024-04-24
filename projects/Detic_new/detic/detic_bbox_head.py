@@ -337,7 +337,6 @@ class DeticBBoxHead(Shared2FCBBoxHead):
             list[:obj:`InstanceData`]: Refined bboxes of each image.
 
         Example:
-            >>> # xdoctest: +REQUIRES(module:kwarray)
             >>> import numpy as np
             >>> from mmdet.models.task_modules.samplers.
             ... sampling_result import random_boxes
