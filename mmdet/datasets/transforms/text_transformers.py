@@ -60,7 +60,7 @@ def check_for_positive_overflow(gt_bboxes, gt_labels, text, tokenizer,
             keep_gt_labels.append(gt_labels[i])
 
     return gt_bboxes[keep_box_index], np.array(
-        keep_gt_labels, dtype=np.long), length
+        keep_gt_labels, dtype=np.long), length, keep_box_index
 
 
 def generate_senetence_given_labels(positive_label_list, negative_label_list,
@@ -164,7 +164,7 @@ class RandomSamplingNegPos(BaseTransform):
             if '/' in value:
                 text[key] = random.choice(value.split('/')).strip()
 
-        gt_bboxes, gt_labels, positive_caption_length = \
+        gt_bboxes, gt_labels, positive_caption_length, keep_box_index = \
             check_for_positive_overflow(gt_bboxes, gt_labels,
                                         text, self.tokenizer, self.max_tokens)
 
@@ -232,6 +232,8 @@ class RandomSamplingNegPos(BaseTransform):
 
         results['gt_bboxes'] = gt_bboxes
         results['gt_bboxes_labels'] = gt_labels
+        if results.get('gt_ignore_flags', None) is not None:
+            results['gt_ignore_flags'] = results['gt_ignore_flags'][keep_box_index]
 
         results['text'] = pheso_caption
         results['tokens_positive'] = label_to_positions
