@@ -5,8 +5,8 @@ import torch.nn.functional as F
 from torch.autograd import Function
 from torch.nn.modules.module import Module
 
-from mmengine.registry import MODELS
-from mmengine.model import xavier_init, normal_init
+from mmcv.cnn import UPSAMPLE_LAYERS, normal_init
+from mmengine.model import xavier_init
 from mmcv.utils import ext_loader
 import numpy as np
 
@@ -208,9 +208,15 @@ class CARAFE(Module):
                       self.scale_factor)
 
 
-@MODELS.register_module(name='dlu')
-class DLUPack(nn.Module):
-    """
+@UPSAMPLE_LAYERS.register_module(name='dlu')
+class light_CARAFEPack(nn.Module):
+    """A unified package of CARAFE upsampler that contains: 1) channel
+    compressor 2) content encoder 3) CARAFE op.
+
+    Official implementation of ICCV 2019 paper
+    CARAFE: Content-Aware ReAssembly of FEatures
+    Please refer to https://arxiv.org/abs/1905.02188 for more details.
+
     Args:
         channels (int): input feature channels
         scale_factor (int): upsample ratio
@@ -232,7 +238,7 @@ class DLUPack(nn.Module):
                  encoder_kernel=3,
                  encoder_dilation=1,
                  compressed_channels=64):
-        super(DLUPack, self).__init__()
+        super(light_CARAFEPack, self).__init__()
         self.channels = channels
         self.scale_factor = scale_factor
         self.up_kernel = up_kernel
@@ -242,6 +248,7 @@ class DLUPack(nn.Module):
         self.compressed_channels = compressed_channels
         self.channel_compressor = nn.Conv2d(channels, self.compressed_channels,
                                             1)
+        ### 修改1：输出的维度变为self.up_kernel * self.up_kernel * self.up_group
         self.kernel_space_generator = nn.Conv2d(
             self.compressed_channels,
             self.up_kernel * self.up_kernel * self.up_group,
@@ -249,6 +256,7 @@ class DLUPack(nn.Module):
             padding=int((self.encoder_kernel - 1) * self.encoder_dilation / 2),
             dilation=self.encoder_dilation,
             groups=1)
+        ### 修改2：生成offset
         self.conv_offset = nn.Conv2d(
             self.compressed_channels,
             self.up_group * 2 * self.scale_factor * self.scale_factor,
@@ -268,6 +276,9 @@ class DLUPack(nn.Module):
 
 
     def kernel_space_normalizer(self, mask):
+        ### 修改3：注释掉
+        # mask = F.pixel_shuffle(mask, self.scale_factor)
+        ### 
         n, mask_c, h, w = mask.size()
         # use float division explicitly,
         # to void inconsistency while exporting to onnx
@@ -278,22 +289,42 @@ class DLUPack(nn.Module):
         mask = mask.view(n, mask_c, h, w).contiguous()        
         return mask
 
+    #######
+    
+
+
+
+
+    #######
+    
+    ### 修改4：https://github.com/oeway/pytorch-deform-conv/blob/d61d3aa4da20880c524193a50f6e9b44b921a938/torch_deform_conv/deform_conv.py#L83
     def kernel_space_expander(self, offset, mask):
         n, _, h, w = offset.size()
         offset = F.pixel_shuffle(offset, self.scale_factor)
         offset = offset.permute(0,2,3,1)
+        # 2022-1-26
+        # offset[:,:,:,0] = offset[:,:,:,0] * 1/w
+        # offset[:,:,:,1] = offset[:,:,:,1] * 1/h
+        # 2022-1-28        
+        # np.save('demo/offset/offset',offset.cpu().numpy())
         offset[:,:,:,0] = offset[:,:,:,0] * 1/(w-1)*2
         offset[:,:,:,1] = offset[:,:,:,1] * 1/(h-1)*2
 
+        # https://github.com/Ayagoz/DefConv_module/blob/c71b2432f4689da1c77314863f815b4f2a5a2395/defconv/defconv.py#L23
         new_h = torch.repeat_interleave(torch.linspace(-1, 1, h),self.scale_factor).view(-1, 1).repeat(1, self.scale_factor*w)
         new_w = torch.repeat_interleave(torch.linspace(-1, 1, w),self.scale_factor).repeat(self.scale_factor*h, 1)
 
+        # 2022-1-29    
+        # new_h = torch.linspace(-1, 1, h*self.scale_factor).view(-1, 1).repeat(1, self.scale_factor*w)
+        # new_w = torch.linspace(-1, 1, w*self.scale_factor).repeat(self.scale_factor*h, 1)
         grid = torch.cat((new_w.unsqueeze(2), new_h.unsqueeze(2)), dim=2)
         grid = grid.unsqueeze(0)
         grid_ = grid.expand(n,-1,-1,-1)  
         grid_ = grid_.to(device=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
         offset = grid_ + offset
-        mask_ = F.grid_sample(mask, offset,padding_mode='border',align_corners=True)     
+        mask_ = F.grid_sample(mask, offset,padding_mode='border',align_corners=True)  
+        # 2022-2-1    
+        # mask_ = F.grid_sample(mask, grid_,padding_mode='border',align_corners=True)     
         return mask_
 
     def feature_reassemble(self, x, mask):
