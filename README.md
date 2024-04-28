@@ -21,7 +21,7 @@ Ping Zhong
 
 ## Requirements
 ### 1. Environment:
-The requirements are exactly the same as mmdetection(https://github.com/open-mmlab/mmdetection). We tested on on the following settings:
+The requirements are exactly the same as mmdetection(https://github.com/open-mmlab/mmdetection). We tested on the following settings:
 
 - python 3.8
 - cuda 10.1
@@ -45,7 +45,7 @@ pip install -v -e .
 
 ### 2. Data:
 
-the folder `data` should be like this:**
+the folder `data` should be like this:
 ```
     data
     ├── coco
@@ -75,9 +75,9 @@ Config files in our experiments are under `./custom/config/FPN/`.
 
 ## Results
 #### The main results on coco val set:
-| Method   | AP    | Model Size |
-| -------- | ----- | ---------- | 
-| Bilinear | 37.5  |            |
-| CARAFE   | 38.6  |            |
-| DLU      | 38.6  |            |
+| Method   | AP    |      Model Size    |
+| -------- | ----- | ------------------ | 
+| Bilinear | 37.5  |  188.5MB           |
+| CARAFE   | 38.6  |  189.7MB(+1.2MB)   |
+| DLU      | 38.6  |  189.1MB(+0.6MB)   |
 
