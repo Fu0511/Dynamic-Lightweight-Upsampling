@@ -3,7 +3,7 @@
 Code for the paper:
 ### [Lighten CARAFE: Dynamic Lightweight Upsampling with Guided Reassemble Kernels]
 
-under review at **ICPR 2024**,
+to be presented at **ICPR 2024**,
 <br>
 Authors:
 <br>
@@ -45,7 +45,7 @@ pip install -v -e .
 
 ### 2. Data:
 
-the folder `data` should be like this:
+The folder `data` should be like this:
 ```
     data
     ├── coco
@@ -75,9 +75,9 @@ Config files in our experiments are under `./custom/config/FPN/`.
 
 ## Results
 #### The main results on coco val set:
-| Method   | AP    |      Model Size    |
-| -------- | ----- | ------------------ | 
-| Bilinear | 37.5  |  188.5MB           |
-| CARAFE   | 38.6  |  189.7MB(+1.2MB)   |
-| DLU      | 38.6  |  189.1MB(+0.6MB)   |
+| Method   |   AP  | Additional Model Size|
+| -------- | ----- | -------------------- | 
+| Bilinear | 37.5  |          --          |
+| CARAFE   | 38.6  |       +1.2MB         |
+| DLU      | 38.6  |       +0.6MB         |
 
