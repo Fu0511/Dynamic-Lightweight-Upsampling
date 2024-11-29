@@ -81,3 +81,16 @@ Config files in our experiments are under `./custom/config/FPN/`.
 | CARAFE   | 38.6  |       +1.2MB         |
 | DLU      | 38.6  |       +0.6MB         |
 
+
+----------
+If these codes are useful to you, please cite our work:
+```
+@misc{fu2024Lighten,
+    title={Lighten CARAFE: Dynamic Lightweight Upsampling with Guided Reassemble Kernels},
+    author={Ruigang Fu and Qingyong Hu and Xiaohu Dong and Yinghui Gao and Biao Li and Ping Zhong},
+    year={2024},
+    eprint={2410.22139},
+    archivePrefix={arXiv},
+    primaryClass={cs.CV}
+}
+```
