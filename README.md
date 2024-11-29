@@ -3,7 +3,7 @@
 Code for the paper:
 ### [Lighten CARAFE: Dynamic Lightweight Upsampling with Guided Reassemble Kernels]
 
-to be presented at **ICPR 2024**,
+Oral at **ICPR 2024**,
 <br>
 Authors:
 <br>
